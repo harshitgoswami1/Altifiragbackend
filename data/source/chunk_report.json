@@ -1,0 +1,3144 @@
+{
+  "chunker_version": "qwen-passages-v1",
+  "tokenizer": {
+    "repo": "Qwen/Qwen3-Embedding-8B",
+    "revision": "1d8ad4ca9b3dd8059ad90a75d4983776a23d44af",
+    "sha256": "83cdf8c3a34f68862319cb1810ee7b1e2c0a44e0864ae930194ddb76bb7feb8d",
+    "source_url": "https://huggingface.co/Qwen/Qwen3-Embedding-8B/resolve/1d8ad4ca9b3dd8059ad90a75d4983776a23d44af/tokenizer.json"
+  },
+  "quarantined": [
+    {
+      "document_id": "blog_5-things-to-know-about-rbi-new-psl-guidelines",
+      "url": "https://altifi.ai/blogs/personal-finance/5-things-to-know-about-rbi-new-psl-guidelines",
+      "reason": "Confirmed source title/body mismatch"
+    },
+    {
+      "document_id": "blog_first-charge-vs-second-charge-in-corporate-bonds",
+      "url": "https://altifi.ai/blogs/bonds/first-charge-vs-second-charge-in-corporate-bonds",
+      "reason": "Confirmed source title/body mismatch"
+    }
+  ],
+  "excluded_spans": [
+    {
+      "document_id": "blog_are-fixed-deposits-still-worth-it-altifi-a-bond-investment-platform",
+      "source_char_span": [
+        8994,
+        9188
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_benefits-of-sovereign-gold-bond-or-sgbs",
+      "source_char_span": [
+        11267,
+        14224
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_bond-public-issue-ipos-explained",
+      "source_char_span": [
+        5134,
+        5343
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_bonds-vs-debentures-key-differences-investment-insights",
+      "source_char_span": [
+        7474,
+        10431
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_different-types-of-corporate-bonds",
+      "source_char_span": [
+        6029,
+        8986
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_economic-indicators-and-their-impact-on-equity-and-corporate-bond-prices",
+      "source_char_span": [
+        8064,
+        8273
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_factors-to-consider-while-building-a-healthy-bond-portfolio",
+      "source_char_span": [
+        10894,
+        13851
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_fixed-deposit-vs-bond-ladder-which-gives-better-cash-flow",
+      "source_char_span": [
+        7537,
+        10494
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_fixed-income-instruments-vs-corporate-bonds",
+      "source_char_span": [
+        2394,
+        5351
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_floating-rate-bonds",
+      "source_char_span": [
+        11817,
+        14774
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_foreign-currency-convertible-bonds-fccbs",
+      "source_char_span": [
+        10118,
+        13075
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_gold-bonds-vs-gold-etfs",
+      "source_char_span": [
+        4312,
+        4521
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_how-to-set-up-a-monthly-pension-bonds",
+      "source_char_span": [
+        10550,
+        13507
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_indian-bond-market",
+      "source_char_span": [
+        7244,
+        10201
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_inflation-indexed-bonds-in-india",
+      "source_char_span": [
+        8468,
+        11425
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_interest-rates-bond-prices-india",
+      "source_char_span": [
+        5967,
+        8924
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_investing-in-sovereign-green-bonds-in-india-2025",
+      "source_char_span": [
+        7824,
+        10781
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_learn-how-bonds-are-taxed-in-india",
+      "source_char_span": [
+        7896,
+        10853
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_new-beginning-for-corporate-bonds-in-india",
+      "source_char_span": [
+        4952,
+        5161
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_primary-corporate-bonds-vs-secondary-corporate-bonds",
+      "source_char_span": [
+        8252,
+        8461
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_retail-bonds-vs-bank-fds-in-2026",
+      "source_char_span": [
+        4991,
+        7989
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_rise-of-india-corporate-bond-market-growth-trends",
+      "source_char_span": [
+        21769,
+        24712
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_secondary-market-bonds-in-india-2025",
+      "source_char_span": [
+        6306,
+        9263
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_senior-secured-bonds-in-india",
+      "source_char_span": [
+        5760,
+        5969
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_short-term-bonds-vs-long-term-bonds",
+      "source_char_span": [
+        8130,
+        8339
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_size-of-the-indian-bond-market",
+      "source_char_span": [
+        12665,
+        15622
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_sovereign-gold-bonds-sgbs-lose-tax-benefits",
+      "source_char_span": [
+        3503,
+        6501
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_tax-free-bonds-vs-tax-saving-bonds",
+      "source_char_span": [
+        9748,
+        12705
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_the-bond-laddering-how-it-helps-manage-investment-risk",
+      "source_char_span": [
+        8209,
+        11166
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_the-role-of-speculation-in-the-bond-market",
+      "source_char_span": [
+        11129,
+        14086
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_understanding-corporate-bond-redemption",
+      "source_char_span": [
+        7485,
+        10442
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_understanding-credit-ratings-what-they-mean-for-bondinvestors",
+      "source_char_span": [
+        10778,
+        13735
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_understanding-the-risks-behind-bond-investing",
+      "source_char_span": [
+        5301,
+        8258
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-are-bonds-and-how-to-invest-in-bonds",
+      "source_char_span": [
+        12837,
+        15794
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-are-perpetual-bonds",
+      "source_char_span": [
+        6694,
+        9651
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-a-bond",
+      "source_char_span": [
+        7550,
+        7759
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-masala-bonds",
+      "source_char_span": [
+        9837,
+        12794
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-yield-to-maturity-ytm",
+      "source_char_span": [
+        9495,
+        12452
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_why-diversification-matters-in-bond-investing",
+      "source_char_span": [
+        5187,
+        8144
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_yields-rose-in-tandem-with-crude-oil-prices",
+      "source_char_span": [
+        1946,
+        4903
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_zero-coupon-bonds-in-india",
+      "source_char_span": [
+        6737,
+        6946
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_-gullak-to-portfolio-investing",
+      "source_char_span": [
+        6740,
+        9683
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_repo-rate-vs-reverse-repo-rate",
+      "source_char_span": [
+        8070,
+        11068
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_understanding-corporate-bond-prices-in-india",
+      "source_char_span": [
+        4689,
+        4898
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_understanding-mutual-fund-nav--expense-ratios",
+      "source_char_span": [
+        9299,
+        12256
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-default",
+      "source_char_span": [
+        8738,
+        11736
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-fiat-money",
+      "source_char_span": [
+        8069,
+        11067
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-liquidity-adjustment-facility",
+      "source_char_span": [
+        9926,
+        12924
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-open-interest",
+      "source_char_span": [
+        5198,
+        8196
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_5-alternatives-fixed-deposits-that-offer-better-returns-in-2024",
+      "source_char_span": [
+        8040,
+        10997
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_a-smarter-way-to-invest-in-corporate-fixed-deposits",
+      "source_char_span": [
+        12390,
+        15347
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_demand-deposit-vs-fixed-deposit",
+      "source_char_span": [
+        9140,
+        12097
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_is-investing-in-corporate-fixed-deposits-safe",
+      "source_char_span": [
+        16900,
+        19857
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_loan-against-fixed-deposit",
+      "source_char_span": [
+        11287,
+        14244
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_swp-vs-fixed-deposit",
+      "source_char_span": [
+        11010,
+        13967
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_understanding-the-benefits-of-investing-in-corporate-fixed-deposits",
+      "source_char_span": [
+        10577,
+        13534
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_venture-capital-vs-fixed-deposits",
+      "source_char_span": [
+        9634,
+        12591
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin--12-december-2025",
+      "source_char_span": [
+        8654,
+        11652
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin-april-2026",
+      "source_char_span": [
+        8136,
+        11131
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_alpha-and-beta-in-mutual-funds",
+      "source_char_span": [
+        6172,
+        9170
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_how-to-choose-the-right-mutual-fund-in-india-for-your-financial-goals",
+      "source_char_span": [
+        5408,
+        8365
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_regular-vs-direct-mutual-fund",
+      "source_char_span": [
+        8823,
+        11821
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_company-fixed-deposits-fd-or-corporate-fixed-deposits-fd",
+      "source_char_span": [
+        8871,
+        11828
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_company-overview-annapurna-finance-private-limited",
+      "source_char_span": [
+        3847,
+        4056
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_company-overview-aye-finance",
+      "source_char_span": [
+        4858,
+        5067
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_company-overview-kerala-financial-corporation",
+      "source_char_span": [
+        4836,
+        5045
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_credit-rating-agencies-in-india",
+      "source_char_span": [
+        8099,
+        11056
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_hindu-undivided-family-huf",
+      "source_char_span": [
+        8733,
+        11731
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_how-do-corporate-fixed-deposits-work-for-investors-in-india",
+      "source_char_span": [
+        10843,
+        13800
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_how-to-download-tan-online",
+      "source_char_span": [
+        6427,
+        9425
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_how-to-transfer-or-gift-a-fixed-deposit-to-someone-in-india",
+      "source_char_span": [
+        9319,
+        12276
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_investing-in-fixed-income-products-how-to-beat-inflation",
+      "source_char_span": [
+        12916,
+        15873
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin-03-october-2025",
+      "source_char_span": [
+        7936,
+        10934
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin-13-february-2026",
+      "source_char_span": [
+        9271,
+        12270
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin-26-september-2025",
+      "source_char_span": [
+        8117,
+        11115
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_ppf-vs-vpf",
+      "source_char_span": [
+        9977,
+        12934
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_rbi-liquidity-management-90-years-stability",
+      "source_char_span": [
+        21706,
+        24649
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_reliable-monthly-income-plan-with-fixed-income-investments",
+      "source_char_span": [
+        8328,
+        11285
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_silver-the-poor-man-gold",
+      "source_char_span": [
+        4666,
+        4875
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-demat-account",
+      "source_char_span": [
+        7859,
+        10857
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_yield-curve-economy-india",
+      "source_char_span": [
+        8413,
+        11370
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_aaa-rated-bonds",
+      "source_char_span": [
+        6899,
+        7108
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_bond-funds-or-bond-etfs",
+      "source_char_span": [
+        6250,
+        9207
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_assessing-risk-understanding-bond-ratings-and-how-they-impact-investments",
+      "source_char_span": [
+        12562,
+        15519
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_bond-ipos-in-india-invest-directly-in-corporate-bonds-easy-access-high-transparency",
+      "source_char_span": [
+        9437,
+        12394
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_bond-market-dynamics-in-india-2026",
+      "source_char_span": [
+        8635,
+        8844
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_bonds-vs-post-office-fixed-deposits-key-differences",
+      "source_char_span": [
+        6593,
+        9550
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_callable-bonds",
+      "source_char_span": [
+        7922,
+        10879
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_catastrophe-bonds",
+      "source_char_span": [
+        8480,
+        11437
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_convertible-bonds",
+      "source_char_span": [
+        7768,
+        10725
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_corporate-bond-valuation",
+      "source_char_span": [
+        6272,
+        6481
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_corporate-bonds-vs-fixed-deposits",
+      "source_char_span": [
+        9892,
+        12849
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_corporate-bonds-vs-gold",
+      "source_char_span": [
+        10286,
+        13243
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_corporate-bonds-vs-government-bonds-in-india",
+      "source_char_span": [
+        6168,
+        9125
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_covered-bonds",
+      "source_char_span": [
+        6326,
+        6535
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_credit-spreads-explained-simply",
+      "source_char_span": [
+        5829,
+        8827
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_fixed-deposit-vs-bonds",
+      "source_char_span": [
+        5118,
+        8075
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_fixed-rate-bonds",
+      "source_char_span": [
+        8209,
+        11166
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_guide-to-bond-funds",
+      "source_char_span": [
+        8270,
+        8479
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_high-safety-bonds",
+      "source_char_span": [
+        10506,
+        13463
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_high-yield-bonds",
+      "source_char_span": [
+        8242,
+        8451
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_how-nris-can-buy-indian-bonds",
+      "source_char_span": [
+        9593,
+        12550
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_how-to-invest-in-government-bonds",
+      "source_char_span": [
+        7113,
+        10070
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_how-to-value-a-bond",
+      "source_char_span": [
+        6339,
+        9296
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_infrastructure-bonds-in-india-guide-to-investment",
+      "source_char_span": [
+        9632,
+        12589
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_investing-in-bonds-vs-stocks-in-india",
+      "source_char_span": [
+        9761,
+        12718
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_investment-grade-bonds",
+      "source_char_span": [
+        9993,
+        12950
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_investment-grade-vs-non-investment-grade-bonds",
+      "source_char_span": [
+        9089,
+        12046
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_is-2026-a-good-year-for-bond-investments",
+      "source_char_span": [
+        7034,
+        7243
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_listed-bonds-vs-unlisted-bonds",
+      "source_char_span": [
+        6568,
+        6777
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_municipal-bonds-in-india",
+      "source_char_span": [
+        6143,
+        9141
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_municipal-bonds-in-india-invest-locally-build-your-community",
+      "source_char_span": [
+        11535,
+        14492
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_psu-bonds",
+      "source_char_span": [
+        7626,
+        10583
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_sdl-and-aaa-spreads-tighten-as-demand",
+      "source_char_span": [
+        1409,
+        4407
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_secured-vs-unsecured-bonds",
+      "source_char_span": [
+        7406,
+        10363
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_social-bonds",
+      "source_char_span": [
+        9049,
+        12006
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_sustainable-bonds-the-power-of-impact-investing",
+      "source_char_span": [
+        7330,
+        7539
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_taxation-of-bonds-in-india",
+      "source_char_span": [
+        6684,
+        9641
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_the-green-bond-in-india",
+      "source_char_span": [
+        10492,
+        13449
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_top-nbfc-bonds-in-india",
+      "source_char_span": [
+        7496,
+        7705
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_types-of-risk-in-bonds",
+      "source_char_span": [
+        8006,
+        10963
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_understanding-bond-yield-rate-and-coupon-rate",
+      "source_char_span": [
+        5888,
+        8845
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-are-ncd",
+      "source_char_span": [
+        6000,
+        8957
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-are-the-nri-bonds-explaining-the-features-and-benefits",
+      "source_char_span": [
+        13241,
+        16198
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-a-bearer-bond",
+      "source_char_span": [
+        5749,
+        8706
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-an-online-bond-platform-provider",
+      "source_char_span": [
+        10090,
+        13047
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-commercial-paper",
+      "source_char_span": [
+        8311,
+        11268
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-coupon-rate",
+      "source_char_span": [
+        4971,
+        7928
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-debenture",
+      "source_char_span": [
+        11059,
+        14016
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-fixed-income-securities",
+      "source_char_span": [
+        7963,
+        10961
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-indemnity-bond",
+      "source_char_span": [
+        9174,
+        12172
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-interpolation",
+      "source_char_span": [
+        5411,
+        8368
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-repo-agreement",
+      "source_char_span": [
+        11421,
+        14378
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-treasury-bills",
+      "source_char_span": [
+        8075,
+        11032
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_where-to-buy-corporate-bonds",
+      "source_char_span": [
+        8692,
+        8901
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_yield-to-maturity",
+      "source_char_span": [
+        4793,
+        7750
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_sharpest-rise-seen-in-the-issuances-of-certificates-of-deposit",
+      "source_char_span": [
+        2034,
+        4991
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-capital-adequacy-ratio",
+      "source_char_span": [
+        7460,
+        10458
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_are-fixed-deposits-a-safe-haven-during-a-market-crash",
+      "source_char_span": [
+        9768,
+        12725
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_fd-maturity-process",
+      "source_char_span": [
+        8974,
+        11931
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_fixed-deposit-interest-rates-vs-inflation-can-fixed-deposits-still-help-you-win",
+      "source_char_span": [
+        10454,
+        13411
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_fixed-deposits-vs-real-estate-which-investment-fits-your-goals-better",
+      "source_char_span": [
+        8739,
+        11696
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-vat",
+      "source_char_span": [
+        5298,
+        8255
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-the-probability-of-default",
+      "source_char_span": [
+        8223,
+        11180
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-opportunity-cost",
+      "source_char_span": [
+        5679,
+        8636
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-form-15g-and-form-15h",
+      "source_char_span": [
+        8335,
+        11292
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-fixed-income-investing",
+      "source_char_span": [
+        7038,
+        9995
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-amortization",
+      "source_char_span": [
+        9076,
+        12033
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-are-interest-rate-swaps-types-benefits",
+      "source_char_span": [
+        10905,
+        13862
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_understanding-long-term-capital-gain-tax",
+      "source_char_span": [
+        9631,
+        12588
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_the-rise-of-renewable-energy-and-carbon-markets-in-india-climate-strategy",
+      "source_char_span": [
+        5533,
+        5742
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_the-rise-of-mini-retirements",
+      "source_char_span": [
+        6534,
+        6742
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_the-ripple-effects-of-middle-east-tensions-on-global-markets",
+      "source_char_span": [
+        5351,
+        6264
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_synopsis-of-union-budget-2025",
+      "source_char_span": [
+        34482,
+        37425
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_sp-upgrades-india-sovereign-rating",
+      "source_char_span": [
+        3595,
+        4169
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_silver-price-prediction",
+      "source_char_span": [
+        5763,
+        8720
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_rule-of-72-and-how-compounding-helps-your-investments-grow",
+      "source_char_span": [
+        13948,
+        16905
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_real-estate-investment-trust-reit",
+      "source_char_span": [
+        8059,
+        11016
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_rbis-double-dose-25bps-rate-cut-to-525-and-1-lakh-crore-omo-infusion-to-boost-economy",
+      "source_char_span": [
+        911,
+        3868
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_rbi-repo-rate-cut",
+      "source_char_span": [
+        6626,
+        9583
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_rbi-new-psl-guidelines-for-small-finance-banks",
+      "source_char_span": [
+        3124,
+        3333
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_krazybee-services-private-limited-company-profile",
+      "source_char_span": [
+        4153,
+        4362
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin-7-november-2025",
+      "source_char_span": [
+        8291,
+        11289
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin-31-october-2025",
+      "source_char_span": [
+        8231,
+        11229
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin-28-november-2025",
+      "source_char_span": [
+        8026,
+        11024
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin-27-october-2025",
+      "source_char_span": [
+        8165,
+        11163
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin-24-november-2025",
+      "source_char_span": [
+        8374,
+        11372
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin-19-september-2025",
+      "source_char_span": [
+        7978,
+        10975
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin-19-december-2025",
+      "source_char_span": [
+        8539,
+        11537
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin-17-october-2025",
+      "source_char_span": [
+        8928,
+        11926
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin-14-november-2025",
+      "source_char_span": [
+        8148,
+        11146
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin-10-october-2025",
+      "source_char_span": [
+        8755,
+        11753
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin-09-january-2026",
+      "source_char_span": [
+        8722,
+        11720
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin-02-january-2026",
+      "source_char_span": [
+        8051,
+        11049
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_investment-options-for-retirement",
+      "source_char_span": [
+        9689,
+        12646
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_inside-the-jane-street-saga",
+      "source_char_span": [
+        4725,
+        4946
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_indian-macroeconomic-indicators-market-update14-august-2025",
+      "source_char_span": [
+        11458,
+        14456
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_indian-macroeconomic-indicators-market-update-22-august-2025",
+      "source_char_span": [
+        7931,
+        10929
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_india-weekly-key-market-insights-macroeconomic-updateaugust-8-2025-altifi",
+      "source_char_span": [
+        11311,
+        14309
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_india-renewable-energy-carbon-market-2025",
+      "source_char_span": [
+        5619,
+        5828
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_income-tax-slabs",
+      "source_char_span": [
+        11054,
+        14011
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_how-to-link-aadhaar-to-pan-online",
+      "source_char_span": [
+        6333,
+        9290
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_high-potential-indias-alternative-investment-options",
+      "source_char_span": [
+        19187,
+        22144
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_gst-2-indias-overhauled-goods-and-services-tax",
+      "source_char_span": [
+        6497,
+        7036
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_growth-in-household-financial-assets-positive-sign-for-indian-economy",
+      "source_char_span": [
+        1544,
+        4501
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_gold-price-prediction",
+      "source_char_span": [
+        7260,
+        10217
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_fixed-deposit-vs-recurring-deposit",
+      "source_char_span": [
+        10647,
+        13604
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_filling-itr-for-first-time",
+      "source_char_span": [
+        8323,
+        11280
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_decoding-the-decline-what-behind-the-rupees-fall",
+      "source_char_span": [
+        2601,
+        5558
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_company-profile-laxmi-india-finance-limited",
+      "source_char_span": [
+        3918,
+        4127
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_company-overview-telangana-state-industrial-infrastructure-corporation",
+      "source_char_span": [
+        5751,
+        5960
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_company-overview-star-housing-finance-limited",
+      "source_char_span": [
+        4404,
+        4613
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_company-overview-satin-finserv-limited",
+      "source_char_span": [
+        2949,
+        3158
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_company-overview-sammaan-capital",
+      "source_char_span": [
+        5445,
+        5654
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_company-overview-rec-limited",
+      "source_char_span": [
+        6053,
+        6262
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_company-overview-power-finance-corporation-limited",
+      "source_char_span": [
+        5142,
+        5351
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_company-overview-oxyzo-financial-services-limited",
+      "source_char_span": [
+        3399,
+        3608
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_company-overview-neogrowth",
+      "source_char_span": [
+        3686,
+        3895
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_company-overview-navi-finserv-limited",
+      "source_char_span": [
+        2809,
+        3018
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_company-overview-namdev-finvest-private-limited",
+      "source_char_span": [
+        3869,
+        4078
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_company-overview-muthoottu-mini-financiers-limited",
+      "source_char_span": [
+        3525,
+        3734
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_company-overview-muthoot-fincorp-limited",
+      "source_char_span": [
+        3745,
+        3954
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_company-overview-muthoot-capital-services-limited",
+      "source_char_span": [
+        4158,
+        4367
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_company-overview-motilal-oswal-financial-services-limited",
+      "source_char_span": [
+        4086,
+        4295
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_company-overview-midland-microfin-limited",
+      "source_char_span": [
+        3463,
+        3672
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_company-overview-mas-financial-services",
+      "source_char_span": [
+        3343,
+        3552
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_company-overview-kerala-infrastructure-investment-fund-board",
+      "source_char_span": [
+        4305,
+        4514
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_company-overview-keertana-finserv",
+      "source_char_span": [
+        2956,
+        3165
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_company-overview-ikf-finance",
+      "source_char_span": [
+        4948,
+        5157
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_company-overview-iifl-samasta-finance-limited",
+      "source_char_span": [
+        3554,
+        3763
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_company-overview-akara-capital-advisors-private-limited",
+      "source_char_span": [
+        4723,
+        4932
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_company-overview-aditya-birla-finance-limited-abfl",
+      "source_char_span": [
+        3809,
+        4018
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_clouds-of-conflict-middle-east-tensions-and-crude-oil",
+      "source_char_span": [
+        2853,
+        5810
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_can-ai-replace-human-financial-advisers",
+      "source_char_span": [
+        6624,
+        6843
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_altifi-weekly-bulletin-indian-economy-markets-global-updates-5-september-2025",
+      "source_char_span": [
+        8115,
+        11113
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_a-beginners-guide-to-fixed-deposits",
+      "source_char_span": [
+        12638,
+        15595
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_5-things-to-know-about-rbis-new-psl-guidelines-for-small-finance-banks",
+      "source_char_span": [
+        3052,
+        3261
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-ytd-on-mutual-funds",
+      "source_char_span": [
+        6611,
+        9609
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_xirr-in-mutual-funds",
+      "source_char_span": [
+        10813,
+        13811
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_taxation-in-mutual-funds",
+      "source_char_span": [
+        6220,
+        9218
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_sip-vs-mutual-fund",
+      "source_char_span": [
+        8372,
+        11370
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_liquid-funds-taxation",
+      "source_char_span": [
+        7270,
+        7479
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_liquid-funds",
+      "source_char_span": [
+        10249,
+        10458
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_etf-vs-mutual-funds",
+      "source_char_span": [
+        9619,
+        12617
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_a-beginners-guide-to-mutual-funds-mfs",
+      "source_char_span": [
+        13480,
+        16437
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin-27-march-2026",
+      "source_char_span": [
+        8386,
+        11384
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin-27-february-2026",
+      "source_char_span": [
+        8716,
+        11715
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin-24-april-2026",
+      "source_char_span": [
+        9051,
+        12049
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin-20-march-2026",
+      "source_char_span": [
+        8095,
+        11093
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin-17-april-2026",
+      "source_char_span": [
+        8885,
+        11883
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin-10-april-2026",
+      "source_char_span": [
+        8968,
+        11966
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin-13-march-2026",
+      "source_char_span": [
+        8706,
+        11705
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin-06-march-2026",
+      "source_char_span": [
+        8232,
+        11231
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_why-banks-offer-different-fd-interest-rates",
+      "source_char_span": [
+        7317,
+        10274
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-are-tax-saving-fixed-deposits-and-how-do-they-work",
+      "source_char_span": [
+        7724,
+        10681
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_tax-deduction-on-fixed-deposit",
+      "source_char_span": [
+        9203,
+        12201
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_post-office-fixed-deposit-interest-rates",
+      "source_char_span": [
+        9571,
+        12528
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_senior-citizen-fixed-deposit-rates",
+      "source_char_span": [
+        12790,
+        15747
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_how-safe-are-fixed-deposits-in-india",
+      "source_char_span": [
+        3821,
+        4409
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_gilt-funds-vs-fixed-deposits-in-2025-which-is-the-smarter-choice",
+      "source_char_span": [
+        6269,
+        9226
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_fixed-deposits-vs-savings-accounts",
+      "source_char_span": [
+        5685,
+        8642
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_mutual-fund-vs-fixed-deposit",
+      "source_char_span": [
+        10732,
+        13689
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_large-cap-vs-mid-cap-vs-small-cap",
+      "source_char_span": [
+        6398,
+        9355
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-one-time-mandate-otm",
+      "source_char_span": [
+        10525,
+        13482
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_when-and-how-to-start-retiremenet-planning",
+      "source_char_span": [
+        5079,
+        8036
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-uan-number",
+      "source_char_span": [
+        8486,
+        11443
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_update-pan-card-details-online",
+      "source_char_span": [
+        11363,
+        14320
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-are-etf-funds",
+      "source_char_span": [
+        8950,
+        11907
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_minimum-amounts-in-fixed-deposit",
+      "source_char_span": [
+        8340,
+        11297
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-idcw",
+      "source_char_span": [
+        10592,
+        13591
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_7-fixed-deposit-strategies-to-maximise-interest-without-taking-risk",
+      "source_char_span": [
+        9283,
+        12240
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_alternatives-to-sovereign-gold-bonds",
+      "source_char_span": [
+        6107,
+        9106
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_a-plus-rated-bonds",
+      "source_char_span": [
+        7012,
+        9969
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_bond-accrued-interest",
+      "source_char_span": [
+        8081,
+        11038
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_bond-equivalent-yield",
+      "source_char_span": [
+        8707,
+        11664
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_bondholders-during-corporate-insolvency",
+      "source_char_span": [
+        10760,
+        13759
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_bondholders-vs-shareholders",
+      "source_char_span": [
+        7035,
+        9992
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_bonds-vs-bond-funds",
+      "source_char_span": [
+        8430,
+        11387
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_clean-price-vs-dirty-price",
+      "source_char_span": [
+        8429,
+        11386
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_corporate-bond-issuance-process",
+      "source_char_span": [
+        7409,
+        10366
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_corporate-bonds-vs-sdi",
+      "source_char_span": [
+        11080,
+        14037
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_difference-between-corporate-bonds-and-private-credit",
+      "source_char_span": [
+        8198,
+        11197
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_difference-g-sec-vs-t-bills-vs-sdl",
+      "source_char_span": [
+        7105,
+        10062
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_difference-in-between-bonds-and-national-savings-certificates-nscs",
+      "source_char_span": [
+        9260,
+        12217
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_esg-bonds",
+      "source_char_span": [
+        6282,
+        9239
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_factors-affecting-bond-prices",
+      "source_char_span": [
+        9939,
+        12937
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_government-bond-interest-rates",
+      "source_char_span": [
+        10883,
+        13840
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_holding-bonds-to-maturity",
+      "source_char_span": [
+        7537,
+        10494
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_how-do-municipal-bonds-work",
+      "source_char_span": [
+        13918,
+        16875
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_how-to-buy-rbi-bonds",
+      "source_char_span": [
+        9400,
+        12357
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_how-to-buy-sovereign-gold-bond",
+      "source_char_span": [
+        8395,
+        11352
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_how-to-compare-two-corporate-bonds",
+      "source_char_span": [
+        9245,
+        12244
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_how-to-redeem-sovereign-gold-bonds-before-maturity",
+      "source_char_span": [
+        7998,
+        10997
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_how-to-sell-bonds",
+      "source_char_span": [
+        8894,
+        11893
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_india-bloomberg-index-inclusion-impact",
+      "source_char_span": [
+        10177,
+        13134
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_macaulay-duration",
+      "source_char_span": [
+        9413,
+        12411
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_maturity-period-in-bonds",
+      "source_char_span": [
+        6892,
+        9849
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_ncd-vs-bonds",
+      "source_char_span": [
+        7969,
+        10926
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_nhai-bonds-interest-rate",
+      "source_char_span": [
+        12252,
+        15209
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_public-vs-private-placement-bonds",
+      "source_char_span": [
+        7585,
+        10542
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_rbi-retail-direct-vs-obpp",
+      "source_char_span": [
+        7380,
+        10337
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_reduce-tax-liability-with-54ec-bonds",
+      "source_char_span": [
+        7440,
+        10397
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_sgb-tax",
+      "source_char_span": [
+        9865,
+        12822
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_sovereign-gold-bond-vs-physical-gold-vs-digital-gold",
+      "source_char_span": [
+        11692,
+        14649
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_step-up-bonds-in-india",
+      "source_char_span": [
+        7307,
+        10264
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_strip-bonds",
+      "source_char_span": [
+        9091,
+        12048
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_terms-used-in-bond-public-issue-bond-ipo",
+      "source_char_span": [
+        12767,
+        15724
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_treasury-bill-vs-notes-vs-bonds",
+      "source_char_span": [
+        8377,
+        11334
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_types-of-government-bonds",
+      "source_char_span": [
+        5798,
+        8755
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-are-barbell-bullet-and-ladder-bond-strategies",
+      "source_char_span": [
+        11242,
+        14241
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-are-bullet-bonds",
+      "source_char_span": [
+        7223,
+        10222
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-are-government-bonds",
+      "source_char_span": [
+        7158,
+        10115
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-are-market-linked-debnetures",
+      "source_char_span": [
+        13620,
+        16618
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-are-ncd-interest-rates",
+      "source_char_span": [
+        12365,
+        15322
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-are-nhai-invit-bonds-and-nhit",
+      "source_char_span": [
+        8792,
+        11791
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-are-open-market-operations",
+      "source_char_span": [
+        9964,
+        12921
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-are-pass-through-certificates",
+      "source_char_span": [
+        12904,
+        15861
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-are-risk-associated-with-nbfc-bonds",
+      "source_char_span": [
+        12775,
+        15732
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-are-the-types-of-nbfc-bonds",
+      "source_char_span": [
+        12637,
+        15594
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-are-tire-ii-bonds",
+      "source_char_span": [
+        8372,
+        11370
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-10-year-bond-yield",
+      "source_char_span": [
+        7229,
+        10227
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-a-debenture-trustee",
+      "source_char_span": [
+        9496,
+        12495
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-bond-central",
+      "source_char_span": [
+        11824,
+        14781
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-bond-etf",
+      "source_char_span": [
+        9723,
+        12680
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-bond-nomination",
+      "source_char_span": [
+        7296,
+        10295
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-bond-quote",
+      "source_char_span": [
+        7542,
+        10499
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-bond-spreads",
+      "source_char_span": [
+        10148,
+        13146
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-bond-yield",
+      "source_char_span": [
+        6924,
+        9881
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-consideration-amount",
+      "source_char_span": [
+        6134,
+        9091
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-convexity-adjustment",
+      "source_char_span": [
+        10784,
+        13741
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-face-value-in-bonds",
+      "source_char_span": [
+        9456,
+        12413
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-modified-duration",
+      "source_char_span": [
+        9634,
+        12591
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-puttable-bonds",
+      "source_char_span": [
+        9965,
+        12922
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-rec-bond-intrest-rate",
+      "source_char_span": [
+        8586,
+        11543
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-term-premium-in-bonds",
+      "source_char_span": [
+        7127,
+        10126
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_why-do-companies-issue-bonds",
+      "source_char_span": [
+        10368,
+        13325
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_yield-to-call",
+      "source_char_span": [
+        13601,
+        16558
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_8th-pay-commission-fitment-factor-explained",
+      "source_char_span": [
+        7877,
+        10876
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_bombay-stock-exchange",
+      "source_char_span": [
+        5961,
+        8918
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_call-option-vs-put-option",
+      "source_char_span": [
+        7859,
+        10858
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_central-banks-are-buying-gold-at-record-pace-as-reserves-rise",
+      "source_char_span": [
+        1982,
+        4980
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_corporate-bond-market-in-india",
+      "source_char_span": [
+        2775,
+        5732
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_difference-between-shares-and-debentures",
+      "source_char_span": [
+        13274,
+        16231
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_financial-year-vs-assessment-year",
+      "source_char_span": [
+        7949,
+        10906
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_fiscal-pressure-liquidity-strain-and-upside-to-yields",
+      "source_char_span": [
+        1767,
+        4724
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_floating-interest-rate",
+      "source_char_span": [
+        9378,
+        12335
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_growth-in-household-financial-assets-a-positive-sign-for-indian-economy",
+      "source_char_span": [
+        1544,
+        4501
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_india-treats-gold-pullback-as-entry-point-despite-global-sell-off",
+      "source_char_span": [
+        2137,
+        5136
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin-30-january-2026",
+      "source_char_span": [
+        8804,
+        11802
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_nse-national-stock-exchange",
+      "source_char_span": [
+        6040,
+        8997
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_pms-vs-aif",
+      "source_char_span": [
+        11953,
+        14910
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_pms-vs-mutual-funds",
+      "source_char_span": [
+        8414,
+        11413
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_post-office-saving-schemes-in-india-types-benefits-and-tax-rules",
+      "source_char_span": [
+        8258,
+        11215
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_power-finance-corporation-limited-ncd-issue-january-2026-should-you-invest",
+      "source_char_span": [
+        5667,
+        8624
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_rbi-foreign-investment-measures-bond-market-impact",
+      "source_char_span": [
+        8015,
+        10972
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_rising-input-costs-set-stage-for-broader-inflation-transmission",
+      "source_char_span": [
+        1981,
+        4938
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_sebi",
+      "source_char_span": [
+        4923,
+        7880
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_silver-poor-mans-gold-2025-rise",
+      "source_char_span": [
+        4806,
+        5015
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_sip-vs-fd",
+      "source_char_span": [
+        7109,
+        10066
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_term-deposit-vs-fixed-deposit-which-offers-better-returns-in-2026",
+      "source_char_span": [
+        7057,
+        10014
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_the-growing-world-of-corporate-bonds",
+      "source_char_span": [
+        17422,
+        20379
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_types-of-financial-market",
+      "source_char_span": [
+        9112,
+        12069
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_understanding-crisil-credit-ratings-before-you-invest",
+      "source_char_span": [
+        9337,
+        12294
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-are-asset-backed-securities",
+      "source_char_span": [
+        10151,
+        13150
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-advance-tax",
+      "source_char_span": [
+        5680,
+        8637
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-colateralized-debt-obligation",
+      "source_char_span": [
+        10278,
+        13277
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-collateral",
+      "source_char_span": [
+        7007,
+        9964
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-insider-trading",
+      "source_char_span": [
+        9338,
+        12295
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-investment-management",
+      "source_char_span": [
+        7565,
+        10564
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-ipo-grey-market",
+      "source_char_span": [
+        9973,
+        12930
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-nifty",
+      "source_char_span": [
+        9085,
+        12084
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-non-performing-asset",
+      "source_char_span": [
+        8853,
+        11852
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-paper-gold",
+      "source_char_span": [
+        7983,
+        10982
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-securitization-meaning-process-and-key-participants",
+      "source_char_span": [
+        9664,
+        12621
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-sip",
+      "source_char_span": [
+        9984,
+        12941
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-statutory-liquidity-ratio",
+      "source_char_span": [
+        9216,
+        12173
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-tds",
+      "source_char_span": [
+        6084,
+        9041
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-tds-traces",
+      "source_char_span": [
+        8918,
+        11875
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-trading-account",
+      "source_char_span": [
+        8452,
+        11409
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-underlying-asset",
+      "source_char_span": [
+        6384,
+        9383
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-are-basis-points",
+      "source_char_span": [
+        7076,
+        10075
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-is-short-term-fixed-deposit",
+      "source_char_span": [
+        8629,
+        11628
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_how-to-select-your-first-bond-beginner-guide",
+      "source_char_span": [
+        8250,
+        11207
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin-03-july-2026",
+      "source_char_span": [
+        8581,
+        11579
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin-05-december-2025",
+      "source_char_span": [
+        8134,
+        11132
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights--altifi-weekly-bulletin-06-february-2026",
+      "source_char_span": [
+        9366,
+        12364
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin--06-february-2026",
+      "source_char_span": [
+        9320,
+        12318
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin-08-may-2026",
+      "source_char_span": [
+        8765,
+        11722
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin-10-july-2026",
+      "source_char_span": [
+        8223,
+        11221
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin-12-june-2026",
+      "source_char_span": [
+        7762,
+        10719
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin-15-may-2026",
+      "source_char_span": [
+        8699,
+        11697
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin-16-january-2026",
+      "source_char_span": [
+        9534,
+        12532
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin-17-july-2026",
+      "source_char_span": [
+        8487,
+        11486
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin-19-june-2026",
+      "source_char_span": [
+        8594,
+        11592
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin--20-february-2026",
+      "source_char_span": [
+        8012,
+        11011
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin-22-may-2026",
+      "source_char_span": [
+        8737,
+        11735
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin-23-january-2026",
+      "source_char_span": [
+        9598,
+        12596
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin-24-july-2026",
+      "source_char_span": [
+        8134,
+        11133
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin-26-june-2026",
+      "source_char_span": [
+        9060,
+        12017
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin-29-may-2026",
+      "source_char_span": [
+        8765,
+        11763
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_key-market-insights-altifi-weekly-bulletin--30-january-2026",
+      "source_char_span": [
+        8847,
+        11845
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_not-sure-if-a-bond-is-safe-bond-safety-checklist-and-due-diligence",
+      "source_char_span": [
+        4834,
+        7791
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_questions-every-investor-should-ask-before-buying-bond",
+      "source_char_span": [
+        9609,
+        12566
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_what-are-open-ended-mutual-funds",
+      "source_char_span": [
+        7927,
+        10926
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_xirr-vs-cagr",
+      "source_char_span": [
+        7505,
+        10504
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    },
+    {
+      "document_id": "blog_smarter-investment-options-beyond-fixed-deposits",
+      "source_char_span": [
+        9244,
+        12201
+      ],
+      "reason": "Recognized terminal legal boilerplate"
+    }
+  ],
+  "errors": [],
+  "source_blogs": 508,
+  "source_bonds": 398,
+  "chunks": 2268,
+  "chunks_by_type": {
+    "blog": 1870,
+    "bond": 398
+  },
+  "represented_documents": 904,
+  "quality_flag_counts": {
+    "repeated_source_title": 28,
+    "maturity_matured": 121
+  },
+  "max_tokens": 600,
+  "configuration": {
+    "target_tokens": 600,
+    "max_tokens": 800,
+    "overlap_tokens": 80
+  },
+  "token_distribution": {
+    "blog": {
+      "min": 92,
+      "median": 586.0,
+      "max": 600
+    },
+    "bond": {
+      "min": 151,
+      "median": 165.0,
+      "max": 179
+    }
+  },
+  "audit": "passed",
+  "output_sha256": "f22bc70aa4fe3f2e47a17cb9cbf9199be079ee65f2f388c24a60f53386fc645a"
+}
