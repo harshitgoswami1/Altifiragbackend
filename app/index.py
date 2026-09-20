@@ -107,38 +107,38 @@ def _activate(settings: Settings, corpus: Corpus, fingerprint: str) -> dict[str,
 
 
 def build_index(settings: Settings, embeddings: Any | None = None) -> dict[str, Any]:
-    """Build a new index before switching the active manifest to it."""
+    """Build at a new content-addressed location before switching the manifest."""
     corpus = load_corpus(settings)
     fingerprint = index_fingerprint(corpus, settings)
     settings.vectorstore_dir.mkdir(parents=True, exist_ok=True)
     embeddings = embeddings or OllamaEmbeddings(model=settings.embedding_model, base_url=settings.ollama_base_url)
     destination = settings.vectorstore_dir / fingerprint
     if destination.exists():
-        existing = _store(settings, fingerprint, embeddings)
-        if _stored_count(existing) != len(corpus.records):
-            raise IndexError(f"Existing index {fingerprint} has an unexpected record count; remove it before rebuilding")
-        return _activate(settings, corpus, fingerprint)
+        try:
+            active = active_manifest(settings)
+        except IndexError:
+            active = None
+        if active and active["fingerprint"] == fingerprint:
+            existing = _store(settings, fingerprint, embeddings)
+            if _stored_count(existing) != len(corpus.records):
+                raise IndexError("The active index has an unexpected record count")
+            return _activate(settings, corpus, fingerprint)
+        # A failed build never becomes active. Remove its old, inactive directory
+        # before retrying, without opening it (important for Windows file locks).
+        shutil.rmtree(destination)
 
-    temporary = Path(tempfile.mkdtemp(prefix=f".{fingerprint}-", dir=settings.vectorstore_dir))
-    try:
-        store = Chroma(
-            collection_name=COLLECTION_NAME,
-            persist_directory=str(temporary),
-            embedding_function=embeddings,
+    # Keep an incomplete version inactive. The next fresh process removes it
+    # before retrying, avoiding Windows' open-SQLite-directory rename limit.
+    store = _store(settings, fingerprint, embeddings)
+    for start in range(0, len(corpus.records), BATCH_SIZE):
+        batch = corpus.records[start:start + BATCH_SIZE]
+        store.add_documents(
+            [Document(page_content=row["embedding_text"], metadata=chroma_metadata(row)) for row in batch],
+            ids=[row["id"] for row in batch],
         )
-        for start in range(0, len(corpus.records), BATCH_SIZE):
-            batch = corpus.records[start:start + BATCH_SIZE]
-            store.add_documents(
-                [Document(page_content=row["embedding_text"], metadata=chroma_metadata(row)) for row in batch],
-                ids=[row["id"] for row in batch],
-            )
-        if _stored_count(store) != len(corpus.records):
-            raise IndexError("New index record count does not match the copied corpus")
-        os.replace(temporary, destination)
-        return _activate(settings, corpus, fingerprint)
-    except Exception:
-        shutil.rmtree(temporary, ignore_errors=True)
-        raise
+    if _stored_count(store) != len(corpus.records):
+        raise IndexError("New index record count does not match the copied corpus")
+    return _activate(settings, corpus, fingerprint)
 
 
 def main() -> None:
