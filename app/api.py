@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, field_validator
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_ollama import ChatOllama, OllamaEmbeddings
+from langsmith import traceable
 
 from app.config import Settings
 from app.corpus import CorpusError
@@ -49,6 +50,17 @@ class Citation(BaseModel):
 class ChatResponse(BaseModel):
     answer: str
     citations: list[Citation]
+
+
+def _trace_inputs(inputs: dict[str, Any]) -> dict[str, str]:
+    request = inputs.get("request")
+    return {"question": request.question} if isinstance(request, ChatRequest) else {}
+
+
+def _trace_output(output: ChatResponse | None) -> dict[str, Any]:
+    if output is None:
+        return {}
+    return {"answer": output.answer, "citation_count": len(output.citations)}
 
 
 def _ollama_reachable(settings: Settings) -> bool:
@@ -132,6 +144,12 @@ def create_app(
         return payload
 
     @app.post("/v1/chat", response_model=ChatResponse)
+    @traceable(
+        name="rag_chat",
+        run_type="chain",
+        process_inputs=_trace_inputs,
+        process_outputs=_trace_output,
+    )
     async def chat(request: ChatRequest) -> ChatResponse:
         try:
             current = current_settings()

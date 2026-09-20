@@ -2023,6 +2023,7 @@ dependencies = [
     { name = "fastapi" },
     { name = "langchain-chroma" },
     { name = "langchain-ollama" },
+    { name = "langsmith" },
     { name = "uvicorn", extra = ["standard"] },
 ]
 
@@ -2032,6 +2033,7 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.115" },
     { name = "langchain-chroma", specifier = ">=0.2" },
     { name = "langchain-ollama", specifier = ">=0.3" },
+    { name = "langsmith", specifier = ">=0.3" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.32" },
 ]
 
