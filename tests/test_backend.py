@@ -12,21 +12,50 @@ from app.api import SYSTEM_PROMPT, create_app
 from app.config import Settings
 from app.corpus import CorpusError, chroma_metadata, load_corpus
 from app.index import IndexError, active_manifest, build_index, ensure_current_index
+from app.retrieval import bond_catalog, deduplicate_matches, route_question
 
 
-def record(identifier="chunk_1"):
+def record(
+    identifier="chunk_1",
+    *,
+    document_id="blog_example",
+    document_type="blog",
+    title="Example title",
+    category="bonds",
+    url="https://example.test/article",
+    isin=None,
+    embedding_text="Useful source text.",
+    quality_flags=None,
+):
     return {
         "id": identifier,
-        "document_id": "blog_example",
-        "document_type": "blog",
-        "title": "Example title",
-        "category": "bonds",
-        "url": "https://example.test/article",
-        "isin": None,
+        "document_id": document_id,
+        "document_type": document_type,
+        "title": title,
+        "category": category,
+        "url": url,
+        "isin": isin,
         "observed_at": "2026-09-19T00:00:00Z",
-        "quality_flags": ["stale_source"],
-        "embedding_text": "Title: Example title\n\nUseful source text.",
+        "quality_flags": ["stale_source"] if quality_flags is None else quality_flags,
+        "embedding_text": f"Title: {title}\n\n{embedding_text}",
     }
+
+
+def bond_record(isin="IN0020010081", title="10.18% Government Of India 11 Sep 2026"):
+    return record(
+        f"bond_{isin}",
+        document_id=f"bond_{isin}",
+        document_type="bond",
+        title=title,
+        category="government-securities",
+        url=f"https://example.test/bonds/{isin}",
+        isin=isin,
+        quality_flags=[],
+        embedding_text=(
+            f"Bond: {title}\nISIN: {isin}\n"
+            "Coupon rate: 10.18% p.a.\nObserved yield to maturity: 5.7% p.a."
+        ),
+    )
 
 
 def write_corpus(source_dir: Path, rows: list[dict]) -> None:
@@ -40,19 +69,48 @@ def write_corpus(source_dir: Path, rows: list[dict]) -> None:
 
 
 class FakeStore:
-    def similarity_search_with_relevance_scores(self, question, k):
-        return [(
-            Document(page_content="Useful source text.", metadata=chroma_metadata(record())),
-            0.9,
-        )]
+    def __init__(self, rows=None):
+        self.rows = rows or [record()]
+        self.calls = []
+
+    @staticmethod
+    def _matches_filter(row, metadata_filter):
+        if not metadata_filter:
+            return True
+        metadata = chroma_metadata(row)
+        if "$and" in metadata_filter:
+            return all(FakeStore._matches_filter(row, clause) for clause in metadata_filter["$and"])
+        return all(
+            metadata.get(key) == (value.get("$eq") if isinstance(value, dict) else value)
+            for key, value in metadata_filter.items()
+        )
+
+    def get(self, where=None, include=None):
+        return {
+            "metadatas": [
+                chroma_metadata(row)
+                for row in self.rows
+                if self._matches_filter(row, where)
+            ]
+        }
+
+    def similarity_search_with_relevance_scores(self, question, k, filter=None):
+        self.calls.append({"question": question, "k": k, "filter": filter})
+        rows = [row for row in self.rows if self._matches_filter(row, filter)]
+        return [
+            (Document(page_content=row["embedding_text"], metadata=chroma_metadata(row)), 0.9 - index * 0.1)
+            for index, row in enumerate(rows[:k])
+        ]
 
 
 class FakeChat:
     def __init__(self):
         self.messages = None
+        self.invocations = 0
 
     def invoke(self, messages):
         self.messages = messages
+        self.invocations += 1
         return AIMessage(content="A grounded answer. [1]")
 
 
@@ -78,6 +136,18 @@ class BackendTests(unittest.TestCase):
 
     def tearDown(self):
         self.temporary.cleanup()
+
+    def routed_client(self, rows, settings=None):
+        fake_chat = FakeChat()
+        fake_store = FakeStore(rows)
+        app = create_app(
+            settings or self.settings,
+            store_loader=lambda _: fake_store,
+            chat_factory=lambda _: fake_chat,
+            index_ready=lambda _: True,
+            ollama_probe=lambda _: True,
+        )
+        return TestClient(app), fake_store, fake_chat
 
     def test_corpus_uses_embedding_text_and_scalar_metadata(self):
         corpus = load_corpus(self.settings)
@@ -137,6 +207,127 @@ class BackendTests(unittest.TestCase):
         app = create_app(self.settings, index_ready=lambda _: False, ollama_probe=lambda _: True)
         response = TestClient(app).post("/v1/chat", json={"question": "Hello"})
         self.assertEqual(response.status_code, 503)
+
+    def test_exact_isin_retrieves_only_the_matching_bond(self):
+        bond = bond_record()
+        blog = record("blog_chunk", title="What is yield to maturity?")
+        client, store, _ = self.routed_client([blog, bond])
+
+        response = client.post("/v1/chat", json={"question": "What is the YTM of IN0020010081?"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual([item["document_type"] for item in response.json()["citations"]], ["bond"])
+        self.assertEqual(
+            store.calls[0]["filter"],
+            {
+                "$and": [
+                    {"document_type": {"$eq": "bond"}},
+                    {"isin": {"$eq": "IN0020010081"}},
+                ]
+            },
+        )
+
+    def test_general_question_retrieves_only_blog_chunks(self):
+        bond = bond_record()
+        blog = record("blog_chunk", title="What is yield to maturity?")
+        client, store, _ = self.routed_client([bond, blog])
+
+        response = client.post("/v1/chat", json={"question": "What is yield to maturity?"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual([item["document_type"] for item in response.json()["citations"]], ["blog"])
+        self.assertEqual(store.calls[0]["filter"], {"document_type": "blog"})
+
+    def test_mixed_question_uses_bond_and_blog_lanes(self):
+        bond = bond_record()
+        blog = record("blog_chunk", title="What is yield to maturity?")
+        client, store, _ = self.routed_client([blog, bond])
+
+        response = client.post(
+            "/v1/chat",
+            json={
+                "question": (
+                    "What does 10.18% Government Of India 11 Sep 2026 mean, "
+                    "and how does YTM work?"
+                )
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            [item["document_type"] for item in response.json()["citations"]],
+            ["bond", "blog"],
+        )
+        self.assertEqual(len(store.calls), 2)
+        self.assertEqual(
+            store.calls[0]["filter"],
+            {
+                "$and": [
+                    {"document_type": {"$eq": "bond"}},
+                    {"isin": {"$eq": "IN0020010081"}},
+                ]
+            },
+        )
+        self.assertEqual(store.calls[1]["filter"], {"document_type": "blog"})
+
+    def test_ambiguous_bond_name_returns_candidates_without_calling_chat_model(self):
+        first = bond_record("IN0020010081", "Tata Capital Limited 8.50% 2030")
+        second = bond_record("IN0020010082", "Tata Capital Housing Finance 8.70% 2030")
+        client, store, fake_chat = self.routed_client([first, second])
+
+        response = client.post("/v1/chat", json={"question": "Tell me about the Tata Capital bond"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("multiple bond records", response.json()["answer"])
+        self.assertEqual(len(response.json()["citations"]), 2)
+        self.assertEqual(fake_chat.invocations, 0)
+        self.assertEqual(store.calls[0]["filter"], {"document_type": "bond"})
+
+    def test_unknown_isin_does_not_fall_back_to_blogs(self):
+        bond = bond_record()
+        blog = record("blog_chunk", title="What is yield to maturity?")
+        client, store, fake_chat = self.routed_client([bond, blog])
+
+        response = client.post("/v1/chat", json={"question": "What is the YTM of IN9999999999?"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["citations"], [])
+        self.assertIn("does not contain a bond record", response.json()["answer"])
+        self.assertEqual(store.calls, [])
+        self.assertEqual(fake_chat.invocations, 0)
+
+    def test_relevance_threshold_rejects_weak_blog_matches(self):
+        settings = Settings(
+            self.settings.source_dir,
+            self.settings.vectorstore_dir,
+            self.settings.ollama_base_url,
+            min_relevance_score=0.95,
+        )
+        client, _, fake_chat = self.routed_client([record()], settings=settings)
+
+        response = client.post("/v1/chat", json={"question": "What is yield to maturity?"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["citations"], [])
+        self.assertEqual(fake_chat.invocations, 0)
+
+    def test_route_question_resolves_exact_bond_title(self):
+        candidate = bond_record()
+        metadata = chroma_metadata(candidate)
+
+        route = route_question(candidate["title"], bond_catalog([metadata]))
+
+        self.assertEqual(route.route, "bond")
+        self.assertEqual(route.resolved_bond.isin, candidate["isin"])
+
+    def test_blog_results_are_deduplicated_by_document(self):
+        first = Document(page_content="first", metadata={"document_id": "blog_1", "chunk_id": "chunk_1"})
+        second = Document(page_content="second", metadata={"document_id": "blog_1", "chunk_id": "chunk_2"})
+        third = Document(page_content="third", metadata={"document_id": "blog_2", "chunk_id": "chunk_3"})
+
+        matches = deduplicate_matches([(first, 0.7), (second, 0.9), (third, 0.8)], 4)
+
+        self.assertEqual([document.metadata["chunk_id"] for document, _ in matches], ["chunk_2", "chunk_3"])
 
     def test_prompt_excludes_advice_and_live_data(self):
         self.assertIn("personalized investment advice", SYSTEM_PROMPT)

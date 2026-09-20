@@ -19,10 +19,16 @@ uv run uvicorn app.api:app --host 127.0.0.1 --port 8000
 `qwen3-embedding:8b-q8_0`; the default chat model is `qwen3:8b`. Override them
 with `OLLAMA_EMBEDDING_MODEL` and `OLLAMA_CHAT_MODEL` if needed.
 
+Retrieval routes questions deterministically: bond-specific questions use bond
+metadata filters, general questions use blog chunks, and mixed questions use
+separate bond and blog retrieval lanes. Set `RAG_MIN_RELEVANCE_SCORE` only
+after calibrating a value from retrieval traces; when unset, no score cutoff is
+applied.
+
 LangSmith tracing is opt-in. Set `LANGSMITH_TRACING=true`,
 `LANGSMITH_API_KEY`, and optionally `LANGSMITH_PROJECT` before starting the
-API. Each request is recorded as a `rag_chat` trace, with LangChain model calls
-nested under it.
+API. Each request is recorded as a `rag_chat` trace, with routed retrieval and
+LangChain model calls nested under it.
 
 For a private-network deployment, choose the Uvicorn bind address in the
 process manager or command line and keep firewall access limited to trusted

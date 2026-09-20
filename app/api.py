@@ -15,6 +15,7 @@ from langsmith import traceable
 from app.config import Settings
 from app.corpus import CorpusError
 from app.index import IndexError, ensure_current_index, open_active_store
+from app.retrieval import QueryRoute, bond_catalog, deduplicate_matches, route_question
 
 
 SYSTEM_PROMPT = """You are the Altifi RAG Assistant, an informational assistant grounded in a fixed snapshot of Altifi blog passages and bond records.
@@ -107,12 +108,24 @@ def _trace_output(output: ChatResponse | None) -> dict[str, Any]:
 
 
 def _trace_retrieval_inputs(inputs: dict[str, Any]) -> dict[str, Any]:
-    return {"question": inputs.get("question", ""), "k": inputs.get("k", 4)}
+    return {
+        "question": inputs.get("question", ""),
+        "route": inputs.get("route", ""),
+        "lane": inputs.get("lane", ""),
+        "metadata_filter": inputs.get("metadata_filter"),
+        "detected_isin": inputs.get("detected_isin"),
+        "resolved_bond_id": inputs.get("resolved_bond_id"),
+        "requested_k": inputs.get("k", 0),
+        "max_results": inputs.get("max_results", 0),
+        "min_relevance_score": inputs.get("min_relevance_score"),
+    }
 
 
 def _trace_retrieval_output(output: list[tuple[Any, float]]) -> dict[str, Any]:
     return {
-        "match_count": len(output),
+        "retained_k": len(output),
+        "source_types": sorted({str(document.metadata.get("document_type", "")) for document, _ in output}),
+        "source_ids": [str(document.metadata.get("chunk_id", "")) for document, _ in output],
         "matches": [
             {
                 "chunk_id": str(document.metadata.get("chunk_id", "")),
@@ -131,8 +144,30 @@ def _trace_retrieval_output(output: list[tuple[Any, float]]) -> dict[str, Any]:
     process_inputs=_trace_retrieval_inputs,
     process_outputs=_trace_retrieval_output,
 )
-def _retrieve(store: Any, question: str, k: int) -> list[tuple[Any, float]]:
-    return store.similarity_search_with_relevance_scores(question, k=k)
+def _retrieve(
+    store: Any,
+    question: str,
+    k: int,
+    *,
+    max_results: int,
+    route: str,
+    lane: str,
+    metadata_filter: dict[str, Any] | None,
+    detected_isin: str | None,
+    resolved_bond_id: str | None,
+    min_relevance_score: float | None,
+    deduplicate: bool,
+) -> list[tuple[Any, float]]:
+    matches = store.similarity_search_with_relevance_scores(
+        question,
+        k=k,
+        filter=metadata_filter,
+    )
+    if deduplicate:
+        matches = deduplicate_matches(matches, len(matches))
+    if min_relevance_score is not None:
+        matches = [match for match in matches if match[1] >= min_relevance_score]
+    return matches[:max_results]
 
 
 def _ollama_reachable(settings: Settings) -> bool:
@@ -159,6 +194,29 @@ def _citation(metadata: dict[str, Any]) -> Citation:
     )
 
 
+def _bond_catalog(store: Any):
+    payload = store.get(where={"document_type": "bond"}, include=["metadatas"])
+    return bond_catalog(payload.get("metadatas", []))
+
+
+def _clarification_response(matches: list[tuple[Any, float]]) -> ChatResponse:
+    if not matches:
+        return ChatResponse(
+            answer="I could not identify a matching bond in the supplied snapshot. Please provide the exact bond title or ISIN.",
+            citations=[],
+        )
+    lines = ["I found multiple bond records that may match. Please provide the exact bond title or ISIN:"]
+    for number, (document, _) in enumerate(matches, start=1):
+        metadata = document.metadata
+        title = str(metadata.get("title", "Untitled bond"))
+        isin = str(metadata.get("isin") or "ISIN unavailable")
+        lines.append(f"- {title} (ISIN: {isin}) [{number}]")
+    return ChatResponse(
+        answer="\n".join(lines),
+        citations=[_citation(document.metadata) for document, _ in matches],
+    )
+
+
 def _context(matches: list[tuple[Any, float]]) -> str:
     blocks = []
     for number, (document, _) in enumerate(matches, start=1):
@@ -166,6 +224,9 @@ def _context(matches: list[tuple[Any, float]]) -> str:
         blocks.append(
             f"Source [{number}]\n"
             f"Title: {metadata.get('title', '')}\n"
+            f"Document type: {metadata.get('document_type', '')}\n"
+            f"ISIN: {metadata.get('isin', '')}\n"
+            f"Category: {metadata.get('category', '')}\n"
             f"URL: {metadata.get('url', '')}\n"
             f"Observed at: {metadata.get('observed_at', '')}\n"
             f"Quality flags: {metadata.get('quality_flags', '[]')}\n\n"
@@ -231,7 +292,95 @@ def create_app(
             raise HTTPException(status_code=503, detail="RAG index is unavailable or stale; run python -m app.index")
         try:
             store = await asyncio.to_thread(store_loader, current)
-            matches = await asyncio.to_thread(_retrieve, store, request.question, 4)
+            catalog = await asyncio.to_thread(_bond_catalog, store)
+            query_route = route_question(request.question, catalog)
+            if query_route.route == "unknown_bond":
+                return ChatResponse(
+                    answer=(
+                        f"The corpus does not contain a bond record for ISIN {query_route.detected_isin}. "
+                        "I cannot answer from this snapshot."
+                    ),
+                    citations=[],
+                )
+            if query_route.route == "ambiguous":
+                candidate_matches = await asyncio.to_thread(
+                    _retrieve,
+                    store,
+                    request.question,
+                    8,
+                    max_results=3,
+                    route=query_route.route,
+                    lane="candidate",
+                    metadata_filter=query_route.metadata_filter,
+                    detected_isin=query_route.detected_isin,
+                    resolved_bond_id=None,
+                    min_relevance_score=None,
+                    deduplicate=True,
+                )
+                return _clarification_response(candidate_matches)
+
+            resolved_bond_id = query_route.resolved_bond.isin if query_route.resolved_bond else None
+            if query_route.route == "bond":
+                exact = query_route.resolved_bond is not None
+                matches = await asyncio.to_thread(
+                    _retrieve,
+                    store,
+                    request.question,
+                    1 if exact else 2,
+                    max_results=1 if exact else 2,
+                    route=query_route.route,
+                    lane="bond",
+                    metadata_filter=query_route.metadata_filter,
+                    detected_isin=query_route.detected_isin,
+                    resolved_bond_id=resolved_bond_id,
+                    min_relevance_score=None if exact else current.min_relevance_score,
+                    deduplicate=True,
+                )
+            elif query_route.route == "blog":
+                matches = await asyncio.to_thread(
+                    _retrieve,
+                    store,
+                    request.question,
+                    12,
+                    max_results=4,
+                    route=query_route.route,
+                    lane="blog",
+                    metadata_filter=query_route.metadata_filter,
+                    detected_isin=None,
+                    resolved_bond_id=None,
+                    min_relevance_score=current.min_relevance_score,
+                    deduplicate=True,
+                )
+            else:
+                bond_matches = await asyncio.to_thread(
+                    _retrieve,
+                    store,
+                    request.question,
+                    2,
+                    max_results=2,
+                    route=query_route.route,
+                    lane="bond",
+                    metadata_filter=query_route.metadata_filter,
+                    detected_isin=query_route.detected_isin,
+                    resolved_bond_id=resolved_bond_id,
+                    min_relevance_score=None,
+                    deduplicate=True,
+                )
+                blog_matches = await asyncio.to_thread(
+                    _retrieve,
+                    store,
+                    request.question,
+                    8,
+                    max_results=2,
+                    route=query_route.route,
+                    lane="blog",
+                    metadata_filter={"document_type": "blog"},
+                    detected_isin=None,
+                    resolved_bond_id=None,
+                    min_relevance_score=current.min_relevance_score,
+                    deduplicate=True,
+                )
+                matches = bond_matches + blog_matches
         except (CorpusError, IndexError):
             raise HTTPException(status_code=503, detail="RAG index is unavailable or stale; run python -m app.index")
         except Exception:
