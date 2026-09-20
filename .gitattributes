@@ -1,0 +1,3 @@
+# These producer artifacts are checksum-validated byte-for-byte.
+data/source/chunks.jsonl -text
+data/source/chunk_report.json -text
