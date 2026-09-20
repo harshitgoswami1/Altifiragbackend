@@ -106,6 +106,35 @@ def _trace_output(output: ChatResponse | None) -> dict[str, Any]:
     return {"answer": output.answer, "citation_count": len(output.citations)}
 
 
+def _trace_retrieval_inputs(inputs: dict[str, Any]) -> dict[str, Any]:
+    return {"question": inputs.get("question", ""), "k": inputs.get("k", 4)}
+
+
+def _trace_retrieval_output(output: list[tuple[Any, float]]) -> dict[str, Any]:
+    return {
+        "match_count": len(output),
+        "matches": [
+            {
+                "chunk_id": str(document.metadata.get("chunk_id", "")),
+                "document_type": str(document.metadata.get("document_type", "")),
+                "title": str(document.metadata.get("title", "")),
+                "relevance_score": score,
+            }
+            for document, score in output
+        ],
+    }
+
+
+@traceable(
+    name="retrieve_context",
+    run_type="retriever",
+    process_inputs=_trace_retrieval_inputs,
+    process_outputs=_trace_retrieval_output,
+)
+def _retrieve(store: Any, question: str, k: int) -> list[tuple[Any, float]]:
+    return store.similarity_search_with_relevance_scores(question, k=k)
+
+
 def _ollama_reachable(settings: Settings) -> bool:
     try:
         with urlopen(f"{settings.ollama_base_url}/api/tags", timeout=3) as response:
@@ -202,7 +231,7 @@ def create_app(
             raise HTTPException(status_code=503, detail="RAG index is unavailable or stale; run python -m app.index")
         try:
             store = await asyncio.to_thread(store_loader, current)
-            matches = await asyncio.to_thread(store.similarity_search_with_relevance_scores, request.question, k=4)
+            matches = await asyncio.to_thread(_retrieve, store, request.question, 4)
         except (CorpusError, IndexError):
             raise HTTPException(status_code=503, detail="RAG index is unavailable or stale; run python -m app.index")
         except Exception:
