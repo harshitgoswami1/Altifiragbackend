@@ -8,6 +8,7 @@ from urllib.request import urlopen
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, field_validator
+from langchain_core.embeddings import Embeddings
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_ollama import ChatOllama, OllamaEmbeddings
 from langsmith import traceable
@@ -105,6 +106,31 @@ def _trace_output(output: ChatResponse | None) -> dict[str, Any]:
     if output is None:
         return {}
     return {"answer": output.answer, "citation_count": len(output.citations)}
+
+
+def _trace_embedding_inputs(inputs: dict[str, Any]) -> dict[str, str]:
+    return {"text": inputs.get("text", "")}
+
+
+def _trace_embedding_output(output: list[float] | None) -> dict[str, int]:
+    return {"dimensions": len(output)} if output is not None else {}
+
+
+class _TracedQueryEmbeddings(Embeddings):
+    def __init__(self, embeddings: Embeddings):
+        self._embeddings = embeddings
+
+    def embed_documents(self, texts: list[str]) -> list[list[float]]:
+        return self._embeddings.embed_documents(texts)
+
+    @traceable(
+        name="query_embedding",
+        run_type="embedding",
+        process_inputs=_trace_embedding_inputs,
+        process_outputs=_trace_embedding_output,
+    )
+    def embed_query(self, text: str) -> list[float]:
+        return self._embeddings.embed_query(text)
 
 
 def _trace_retrieval_inputs(inputs: dict[str, Any]) -> dict[str, Any]:
@@ -247,7 +273,10 @@ def create_app(
         return settings if settings is not None else Settings.from_env()
 
     store_loader = store_loader or (lambda current: open_active_store(
-        current, OllamaEmbeddings(model=current.embedding_model, base_url=current.ollama_base_url)
+        current,
+        _TracedQueryEmbeddings(
+            OllamaEmbeddings(model=current.embedding_model, base_url=current.ollama_base_url)
+        ),
     ))
     chat_factory = chat_factory or (lambda current: ChatOllama(model=current.chat_model, base_url=current.ollama_base_url))
     index_ready = index_ready or (lambda current: _index_is_ready(current))
