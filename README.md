@@ -27,8 +27,9 @@ applied.
 
 LangSmith tracing is opt-in. Set `LANGSMITH_TRACING=true`,
 `LANGSMITH_API_KEY`, and optionally `LANGSMITH_PROJECT` before starting the
-API. Each request is recorded as a `rag_chat` trace, with routed retrieval and
-LangChain model calls nested under it.
+API. Each `/v1/chat` request is recorded as a `rag_chat` trace, with routed
+retrieval and LangChain model calls nested under it. Streaming requests retain
+the retrieval and model traces.
 
 For a private-network deployment, choose the Uvicorn bind address in the
 process manager or command line and keep firewall access limited to trusted
@@ -65,6 +66,14 @@ It returns a completed answer and citations containing the source URL and
 observation metadata. The service is informational only: it does not provide
 personalized investment advice, live availability/pricing, or exhaustive
 numeric rankings.
+
+`POST /v1/chat/stream` accepts the same JSON body and returns server sent
+events (`text/event-stream`). It sends a `citations` event containing the same
+citation objects as `/v1/chat`, then `token` events with `{ "text": "..." }`,
+and finally a `done` event. Questions answered without the model emit their
+full answer in one `token` event. Validation and index errors return normal
+HTTP 422/503 responses before streaming begins; model failures during a stream
+emit an `error` event with a `detail` field.
 
 ## Tests
 

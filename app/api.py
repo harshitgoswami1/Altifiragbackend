@@ -2,11 +2,11 @@
 
 import asyncio
 import json
-from typing import Any, Callable
+from typing import Any, AsyncIterator, Callable
 from urllib.request import urlopen
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field, field_validator
 from langchain_core.embeddings import Embeddings
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -305,14 +305,7 @@ def create_app(
             return JSONResponse(status_code=503, content=payload)
         return payload
 
-    @app.post("/v1/chat", response_model=ChatResponse)
-    @traceable(
-        name="rag_chat",
-        run_type="chain",
-        process_inputs=_trace_inputs,
-        process_outputs=_trace_output,
-    )
-    async def chat(request: ChatRequest) -> ChatResponse:
+    async def prepare_chat(request: ChatRequest) -> ChatResponse | tuple[Settings, list[Any], list[Citation]]:
         try:
             current = current_settings()
         except RuntimeError as error:
@@ -416,18 +409,63 @@ def create_app(
             raise HTTPException(status_code=503, detail="The embedding service is unavailable")
         if not matches:
             return ChatResponse(answer="The corpus does not contain enough evidence to answer that question.", citations=[])
+        return (
+            current,
+            [SystemMessage(content=SYSTEM_PROMPT), HumanMessage(content=f"Question: {request.question}\n\nSources:\n{_context(matches)}")],
+            [_citation(document.metadata) for document, _ in matches],
+        )
+
+    @app.post("/v1/chat", response_model=ChatResponse)
+    @traceable(
+        name="rag_chat",
+        run_type="chain",
+        process_inputs=_trace_inputs,
+        process_outputs=_trace_output,
+    )
+    async def chat(request: ChatRequest) -> ChatResponse:
+        prepared = await prepare_chat(request)
+        if isinstance(prepared, ChatResponse):
+            return prepared
+        current, messages, citations = prepared
         try:
-            model = chat_factory(current)
-            response = await asyncio.to_thread(
-                model.invoke,
-                [SystemMessage(content=SYSTEM_PROMPT), HumanMessage(content=f"Question: {request.question}\n\nSources:\n{_context(matches)}")],
-            )
+            response = await asyncio.to_thread(chat_factory(current).invoke, messages)
         except Exception:
             raise HTTPException(status_code=503, detail="The chat model is unavailable")
-        return ChatResponse(
-            answer=str(response.content),
-            citations=[_citation(document.metadata) for document, _ in matches],
-        )
+        return ChatResponse(answer=str(response.content), citations=citations)
+
+    @app.post("/v1/chat/stream")
+    async def chat_stream(request: ChatRequest) -> StreamingResponse:
+        prepared = await prepare_chat(request)
+        if isinstance(prepared, ChatResponse):
+            citations = prepared.citations
+            answer = prepared.answer
+            model = None
+        else:
+            current, messages, citations = prepared
+            try:
+                model = chat_factory(current)
+            except Exception:
+                raise HTTPException(status_code=503, detail="The chat model is unavailable")
+            answer = None
+
+        def event(name: str, data: Any) -> str:
+            return f"event: {name}\ndata: {json.dumps(data)}\n\n"
+
+        async def events() -> AsyncIterator[str]:
+            yield event("citations", [citation.model_dump() for citation in citations])
+            if answer is not None:
+                yield event("token", {"text": answer})
+            else:
+                try:
+                    async for chunk in model.astream(messages):
+                        if chunk.content:
+                            yield event("token", {"text": str(chunk.content)})
+                except Exception:
+                    yield event("error", {"detail": "The chat model is unavailable"})
+                    return
+            yield event("done", {})
+
+        return StreamingResponse(events(), media_type="text/event-stream")
 
     return app
 

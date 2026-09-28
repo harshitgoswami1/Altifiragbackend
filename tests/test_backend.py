@@ -113,6 +113,12 @@ class FakeChat:
         self.invocations += 1
         return AIMessage(content="A grounded answer. [1]")
 
+    async def astream(self, messages):
+        self.messages = messages
+        self.invocations += 1
+        yield AIMessage(content="A grounded ")
+        yield AIMessage(content="answer. [1]")
+
 
 class TinyEmbeddings:
     def embed_documents(self, texts):
@@ -207,6 +213,60 @@ class BackendTests(unittest.TestCase):
         app = create_app(self.settings, index_ready=lambda _: False, ollama_probe=lambda _: True)
         response = TestClient(app).post("/v1/chat", json={"question": "Hello"})
         self.assertEqual(response.status_code, 503)
+
+    def test_stream_returns_citations_and_incremental_answer(self):
+        client, _, fake_chat = self.routed_client([record()])
+
+        response = client.post("/v1/chat/stream", json={"question": "What does this say?"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.headers["content-type"].startswith("text/event-stream"))
+        events = [
+            (name.removeprefix("event: "), json.loads(data.removeprefix("data: ")))
+            for name, data in (block.splitlines() for block in response.text.strip().split("\n\n"))
+        ]
+        self.assertEqual([name for name, _ in events], ["citations", "token", "token", "done"])
+        self.assertEqual(events[0][1][0]["chunk_id"], "chunk_1")
+        self.assertEqual("".join(item["text"] for name, item in events if name == "token"), "A grounded answer. [1]")
+        self.assertIn("Source [1]", str(fake_chat.messages[1].content))
+
+    def test_stream_handles_deterministic_answer_without_model(self):
+        client, _, fake_chat = self.routed_client([bond_record()])
+
+        response = client.post("/v1/chat/stream", json={"question": "What is the YTM of IN9999999999?"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('event: citations\ndata: []', response.text)
+        self.assertIn("does not contain a bond record", response.text)
+        self.assertIn("event: done", response.text)
+        self.assertEqual(fake_chat.invocations, 0)
+
+    def test_stream_preserves_preflight_errors(self):
+        app = create_app(self.settings, index_ready=lambda _: False)
+        client = TestClient(app)
+
+        self.assertEqual(client.post("/v1/chat/stream", json={"question": " "}).status_code, 422)
+        self.assertEqual(client.post("/v1/chat/stream", json={"question": "Hello"}).status_code, 503)
+
+    def test_stream_reports_model_failure_as_event(self):
+        class FailingChat:
+            async def astream(self, messages):
+                yield AIMessage(content="Partial answer")
+                raise RuntimeError("model disconnected")
+
+        app = create_app(
+            self.settings,
+            store_loader=lambda _: FakeStore(),
+            chat_factory=lambda _: FailingChat(),
+            index_ready=lambda _: True,
+        )
+
+        response = TestClient(app).post("/v1/chat/stream", json={"question": "What does this say?"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('event: token\ndata: {"text": "Partial answer"}', response.text)
+        self.assertIn('event: error\ndata: {"detail": "The chat model is unavailable"}', response.text)
+        self.assertNotIn("event: done", response.text)
 
     def test_exact_isin_retrieves_only_the_matching_bond(self):
         bond = bond_record()
