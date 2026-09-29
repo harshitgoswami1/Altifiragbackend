@@ -3,6 +3,7 @@
 import asyncio
 from decimal import Decimal
 import json
+import operator
 from typing import Any, AsyncIterator, Callable
 from urllib.request import urlopen
 
@@ -244,14 +245,18 @@ def _clarification_response(matches: list[tuple[Any, float]]) -> ChatResponse:
     )
 
 
-def _bond_yield_response(store: Any, threshold: Decimal) -> ChatResponse:
+def _bond_yield_response(store: Any, threshold: Decimal, comparison: str = "gt", limit: int = 4) -> ChatResponse:
+    compare, description = {
+        "gt": (operator.gt, "strictly above"), "gte": (operator.ge, "at least"),
+        "lt": (operator.lt, "strictly below"), "lte": (operator.le, "at most"),
+    }[comparison]
     payload = store.get(where={"document_type": "bond"}, include=["documents", "metadatas"])
     eligible = []
     for metadata, document in zip(payload.get("metadatas", []), payload.get("documents", [])):
         if not metadata or not document or metadata.get("document_type") != "bond":
             continue
         yield_value = observed_ytm(document)
-        if yield_value is None or yield_value <= threshold:
+        if yield_value is None or not compare(yield_value, threshold):
             continue
         citation = _citation(metadata)
         if "maturity_matured" not in citation.quality_flags:
@@ -262,24 +267,31 @@ def _bond_yield_response(store: Any, threshold: Decimal) -> ChatResponse:
     if not count:
         return ChatResponse(
             answer=(
-                f"I found no bond records in this dated snapshot with observed YTM strictly above {threshold}% p.a. "
+                f"I found no bond records in this dated snapshot with observed YTM {description} {threshold}% p.a. "
                 "after excluding records flagged matured. This does not establish what is currently available."
             ),
             citations=[],
         )
 
-    examples = eligible[:4]
+    examples = eligible[:min(limit, 20)]
+    record_label = "bond record" if count == 1 else "bond records"
+    example_label = "Here is 1 example:" if len(examples) == 1 else f"Here are {len(examples)} examples:"
     lines = [
-        f"I found {count} bond records in the dated snapshot with observed YTM strictly above {threshold}% p.a. "
-        f"and no matured flag. Here are {len(examples)} examples:"
+        f"I found {count} {record_label} in the dated snapshot with observed YTM {description} {threshold}% p.a. "
+        f"and no matured flag. {example_label}"
     ]
+    if limit > 20:
+        lines.append("Showing at most 20 examples per response.")
     for number, (citation, yield_value) in enumerate(examples, start=1):
         lines.append(
             f"- {citation.title} (ISIN {citation.isin}): observed YTM {yield_value}% p.a., "
             f"observed {citation.observed_at}. [{number}]"
         )
-    lines.append("These observations do not establish current availability or guarantee a return.")
-    return ChatResponse(answer="\n".join(lines), citations=[citation for citation, _ in examples])
+    lines.append(
+        "Rate of return is interpreted as observed yield to maturity (YTM). "
+        "Examples are ordered by ISIN. These observations do not establish current availability or guarantee a return."
+    )
+    return ChatResponse(answer="\n\n".join(lines), citations=[citation for citation, _ in examples])
 
 
 def _context(matches: list[tuple[Any, float]]) -> str:
@@ -364,7 +376,20 @@ def create_app(
                     citations=[],
                 )
             if query_route.route == "bond_yield_filter":
-                return await asyncio.to_thread(_bond_yield_response, store, query_route.yield_threshold)
+                return await asyncio.to_thread(
+                    _bond_yield_response, store, query_route.yield_threshold,
+                    query_route.yield_comparison, query_route.result_limit,
+                )
+            if query_route.route == "bond_filter_clarification":
+                return ChatResponse(
+                    answer=(
+                        "Please specify one observed yield to maturity (YTM) condition and a positive number of bonds, "
+                        "for example: '5 bonds with YTM above 12%' or '5 bonds with YTM at least 12%'. "
+                        "This search supports above, below, at least, and at most; coupon and interest-rate filters "
+                        "and ranges are not supported yet."
+                    ),
+                    citations=[],
+                )
             if query_route.route == "ambiguous":
                 candidate_matches = await asyncio.to_thread(
                     _retrieve,

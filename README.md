@@ -25,12 +25,17 @@ separate bond and blog retrieval lanes. Set `RAG_MIN_RELEVANCE_SCORE` only
 after calibrating a value from retrieval traces; when unset, no score cutoff is
 applied.
 
-Bond list requests such as "give me bonds greater than 10% rate of return" use
-the snapshot's observed yield to maturity (YTM). For strict `>` comparisons,
-the backend checks the recorded values, excludes records flagged as matured,
-and returns up to four cited examples ordered by ISIN with the total match
-count. The observations do not establish current availability or guaranteed
-returns.
+Bond searches such as "5 bonds with more than 12% rate of return" use the
+snapshot's observed yield to maturity (YTM). Requests need no special opening
+phrase. The backend supports above/more than (`>`), at least (`>=`), below
+(`<`), and at most (`<=`), including percentages written as "percent" or
+"per cent". It checks recorded values and excludes records flagged as matured.
+Counts such as "5 bonds" and "five bonds" are honored; the default is four
+examples, with a maximum of 20 per response. Results include the total match
+count and citations, ordered by ISIN. Unsupported numeric conditions, including
+coupon filters and ranges, request clarification instead of retrieving blogs.
+Educational questions still use general sources. Chat and streaming share this
+behavior. The observations do not establish current availability or guaranteed returns.
 
 LangSmith tracing is opt-in. Set `LANGSMITH_TRACING=true`,
 `LANGSMITH_API_KEY`, and optionally `LANGSMITH_PROJECT` before starting the

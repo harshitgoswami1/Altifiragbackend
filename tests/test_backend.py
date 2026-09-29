@@ -447,8 +447,11 @@ class BackendTests(unittest.TestCase):
         self.assertEqual([item["document_type"] for item in explanation.json()["citations"]], ["blog"])
 
     def test_numeric_bond_search_stream_matches_chat(self):
-        client, _, _ = self.routed_client([bond_record(ytm="11.2")])
-        request = {"question": "give me bonds greater than 10% rate of return"}
+        client, _, _ = self.routed_client([
+            bond_record(f"IN000000000{number}", f"Issuer {number}", "12.1")
+            for number in range(1, 7)
+        ])
+        request = {"question": "5 bonds with more than 12% rate of return"}
 
         response = client.post("/v1/chat", json=request).json()
         stream = client.post("/v1/chat/stream", json=request)
@@ -461,6 +464,83 @@ class BackendTests(unittest.TestCase):
         self.assertEqual([name for name, _ in events], ["citations", "token", "done"])
         self.assertEqual(events[0][1], response["citations"])
         self.assertEqual(events[1][1]["text"], response["answer"])
+        self.assertEqual(len(response["citations"]), 5)
+
+    def test_bond_search_accepts_counts_and_natural_request_phrases(self):
+        client, store, model = self.routed_client([
+            bond_record(f"IN000000000{number}", f"Issuer {number}", "12.1")
+            for number in range(1, 7)
+        ])
+        for question in (
+            "5 bonds with more than 12% rate of return",
+            "five bonds above 12 percent",
+            "I am looking for 5 bonds yielding over 12%",
+            "Could you please get me 5 bonds with returns greater than 12 per cent?",
+            "Are there 5 bonds that return more than 12%?",
+            "Which 5 bonds have YTM > 12%?",
+            "Can you show me 5 bonds above 12% and explain the results?",
+        ):
+            with self.subTest(question=question):
+                body = client.post("/v1/chat", json={"question": question}).json()
+                self.assertEqual(len(body["citations"]), 5)
+                self.assertIn("I found 6 bond records", body["answer"])
+                self.assertIn("Here are 5 examples", body["answer"])
+        self.assertEqual(store.calls, [])
+        self.assertEqual(model.invocations, 0)
+
+    def test_bond_search_respects_comparison_boundaries(self):
+        client, _, _ = self.routed_client([
+            bond_record("IN0000000001", "Below", "11.99"),
+            bond_record("IN0000000002", "Equal", "12"),
+            bond_record("IN0000000003", "Above", "12.01"),
+        ])
+        for comparison, expected in (
+            ("more than", ["Above"]), ("at least", ["Equal", "Above"]),
+            (">=", ["Equal", "Above"]), ("≥", ["Equal", "Above"]),
+            ("no less than", ["Equal", "Above"]),
+            ("below", ["Below"]), ("<", ["Below"]),
+            ("at most", ["Below", "Equal"]), ("no more than", ["Below", "Equal"]),
+            ("<=", ["Below", "Equal"]),
+        ):
+            with self.subTest(comparison=comparison):
+                body = client.post("/v1/chat", json={"question": f"5 bonds with YTM {comparison} 12%"}).json()
+                self.assertEqual([citation["title"] for citation in body["citations"]], expected)
+
+    def test_unsupported_bond_filters_request_clarification_without_blogs(self):
+        client, store, model = self.routed_client([bond_record(), record()])
+        for question in (
+            "5 bonds with 12% returns", "5 bonds between 10% and 12%",
+            "5 bonds with coupon above 12%", "5 bonds with YTM not above 12%",
+            "0 bonds above 12%",
+        ):
+            with self.subTest(question=question):
+                body = client.post("/v1/chat", json={"question": question}).json()
+                self.assertIn("Please specify", body["answer"])
+                self.assertEqual(body["citations"], [])
+        self.assertEqual(store.calls, [])
+        self.assertEqual(model.invocations, 0)
+
+    def test_numeric_examples_in_educational_questions_still_use_blogs(self):
+        catalog = bond_catalog([chroma_metadata(bond_record())])
+        for question in (
+            "Why do bonds yield more than 12%?",
+            "Tell me why bonds offer more than 12% returns",
+            "Please help me understand bonds above 12%",
+            "Can you please explain bonds with returns above 12%?",
+            "How does YTM above 12% affect bonds?",
+            "What does a yield above 12% mean for bonds?",
+        ):
+            with self.subTest(question=question):
+                self.assertEqual(route_question(question, catalog).route, "blog")
+
+    def test_bond_search_caps_large_requests(self):
+        client, _, _ = self.routed_client([
+            bond_record(f"IN{number:010d}", f"Issuer {number}", "13") for number in range(1, 26)
+        ])
+        body = client.post("/v1/chat", json={"question": "100 bonds above 12%"}).json()
+        self.assertEqual(len(body["citations"]), 20)
+        self.assertIn("I found 25 bond records", body["answer"])
+        self.assertIn("at most 20 examples", body["answer"])
 
     def test_blog_results_are_deduplicated_by_document(self):
         first = Document(page_content="first", metadata={"document_id": "blog_1", "chunk_id": "chunk_1"})
