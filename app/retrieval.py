@@ -87,6 +87,7 @@ class QueryRoute(BaseModel):
     message: str = ""
     needs_model: bool = False
     method: Literal["rules", "model"] = "rules"
+    router_outcome: Literal["not_called", "model_accepted", "rules_preserved", "timeout", "failed"] = "not_called"
     fallback_latency_ms: float = 0
 
     @property

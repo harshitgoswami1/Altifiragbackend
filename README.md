@@ -79,42 +79,47 @@ Set `RAG_MIN_RELEVANCE_SCORE` only after calibrating it against retrieval traces
 when unset, educational retrieval has no score cutoff. An empty retrieval result
 is reported as insufficient retrieved evidence, not proof of absence from the corpus.
 
-### Optional model fallback
+### Optional model routing
 
-Unresolved phrasing can use one Ollama classification call with temperature zero
-and a Pydantic structured schema. The model proposes an intent, references, and
-conditions; local code checks source phrases, resolves catalog identities, and
-revalidates all constraints. Model output is never executed as a database filter.
-Timeout, invalid output, unknown references, and unhandled conditions produce
-clarification without retrying. Deterministic routes do not depend on this model.
+When enabled, every query makes one Ollama classification call with temperature
+zero and a Pydantic structured schema. The model proposes an intent, references,
+and conditions; local code checks source phrases, resolves catalog identities,
+and revalidates all constraints. Model output is never executed as a database
+filter. Clear rule-based routes remain authoritative if the model disagrees,
+times out, or returns invalid output. Unresolved queries use a validated model
+proposal or ask for clarification without retrying. This adds routing latency to
+every enabled request, including greetings and exact bond lookups.
 
 | Environment variable | Default | Purpose |
 | --- | --- | --- |
-| `RAG_ROUTER_ENABLED` | `false` | Enable fallback after the evaluation gate passes. |
+| `RAG_ROUTER_ENABLED` | `false` | Enable model routing for every query after the evaluation gate passes. |
 | `RAG_ROUTER_MODEL` | `OLLAMA_CHAT_MODEL` | Optional routing model override. |
 | `RAG_ROUTER_TIMEOUT_SECONDS` | `15` | Positive, finite classification timeout. |
 
-Before enabling fallback on a deployment, evaluate its actual Ollama model:
+Before enabling model routing on a deployment, evaluate its actual Ollama model:
 
 ```sh
 uv run python -m app.evaluate_routing tests/routing_eval.json
 ```
 
 This command requires `OLLAMA_BASE_URL`. It uses a synthetic bond catalog and
-40 labeled paraphrases, calls the model only when rules need fallback, and does
+40 labeled paraphrases, calls the model once for every case, and does
 not retrieve documents or generate answers. It prints per-case decisions and
 exits successfully only with at least 95% exact decision accuracy, zero unsafe
-executed decisions (including dropped conditions or invented references), and at
-least one model call. It does not change deployment settings. Add representative
-held-out production questions before rollout, and rerun after model changes.
+executed decisions (including dropped conditions or invented references), one
+model call per case, and at least one accepted model route. It reports accepted
+model routes separately and does not change deployment settings. Add
+representative held-out production questions before rollout, and rerun after
+model changes.
 Enable `RAG_ROUTER_ENABLED=true` only after passing. The offline unit suite tests
 model handling with fakes; it does not establish real-model accuracy.
 
 LangSmith tracing is opt-in. Set `LANGSMITH_TRACING=true`, `LANGSMITH_API_KEY`,
 and optionally `LANGSMITH_PROJECT`. Both endpoints emit a routing trace containing
-method, intent, reason, resolved references, applied filters, ordering, fallback
-latency, limitations, and clarification outcome. Retrieval and model calls retain
-their existing traces; `/v1/chat` also has a parent `rag_chat` trace.
+method, router outcome, intent, reason, resolved references, applied filters,
+ordering, router latency, limitations, and clarification outcome. Retrieval and
+model calls retain their existing traces; `/v1/chat` also has a parent `rag_chat`
+trace.
 
 For a private-network deployment, choose the Uvicorn bind address in the
 process manager or command line and keep firewall access limited to trusted

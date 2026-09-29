@@ -813,21 +813,54 @@ class BackendTests(unittest.TestCase):
     def test_model_fallback_classifies_unfamiliar_education_once(self):
         router = FakeRouter({"intent": "education"})
         store, chat = FakeStore([record()]), FakeChat()
-        app = create_app(self.settings, store_loader=lambda _: store, chat_factory=lambda _: chat,
+        app = create_app(replace(self.settings, router_enabled=True), store_loader=lambda _: store, chat_factory=lambda _: chat,
                          router_factory=lambda _: router, index_ready=lambda _: True)
         body = TestClient(app).post("/v1/chat", json={"question": "Walk me through the mechanics of bond yields"}).json()
         self.assertEqual(len(body["citations"]), 1)
         self.assertEqual(router.calls, 1)
         self.assertEqual(chat.invocations, 1)
 
-    def test_deterministic_routes_never_call_router(self):
-        router = FakeRouter(error=AssertionError("Must not call router"))
-        app = create_app(self.settings, store_loader=lambda _: FakeStore([detailed_bond()]),
+    def test_enabled_router_is_called_once_for_every_route_and_endpoint(self):
+        router = FakeRouter({"intent": "clarification"})
+        app = create_app(replace(self.settings, router_enabled=True),
+                         store_loader=lambda _: FakeStore([detailed_bond(), record()]),
                          chat_factory=lambda _: FakeChat(), router_factory=lambda _: router,
                          index_ready=lambda _: True)
-        for question in ("Show bonds above 10%", "What is yield?", "Hello", "What is IN0000000001?"):
-            self.assertEqual(TestClient(app).post("/v1/chat", json={"question": question}).status_code, 200)
+        for endpoint in ("/v1/chat", "/v1/chat/stream"):
+            for question in ("Show bonds above 10%", "What is yield?", "Hello", "What is IN0000000001?",
+                             "Walk me through the mechanics of bond yields"):
+                with self.subTest(endpoint=endpoint, question=question):
+                    response = TestClient(app).post(endpoint, json={"question": question})
+                    self.assertEqual(response.status_code, 200)
+                    if question != "Walk me through the mechanics of bond yields":
+                        self.assertNotIn("Please specify", response.text)
+        self.assertEqual(router.calls, 10)
+
+    def test_disabled_router_does_not_call_injected_model(self):
+        router = FakeRouter(error=AssertionError("Router must stay disabled"))
+        for question in ("Hello", "Walk me through bond yields"):
+            decision = asyncio.run(_route_request(question, [], self.settings, lambda _: router))
+            self.assertEqual(decision.router_outcome, "not_called")
         self.assertEqual(router.calls, 0)
+
+    def test_router_errors_and_disagreement_preserve_clear_rule_routes(self):
+        question = "Show bonds above 10%"
+        catalog = bond_catalog([chroma_metadata(detailed_bond())])
+        expected = decision_signature(route_question(question, catalog))
+        for router, outcome in (
+            (FakeRouter(error=RuntimeError("disconnected")), "failed"),
+            (FakeRouter({"intent": "invented"}), "failed"),
+            (FakeRouter(delay=0.1), "timeout"),
+            (FakeRouter({"intent": "education"}), "failed"),
+            (FakeRouter({"intent": "clarification"}), "rules_preserved"),
+        ):
+            with self.subTest(outcome=outcome, router=router):
+                settings = replace(self.settings, router_enabled=True, router_timeout_seconds=0.01)
+                decision = asyncio.run(_route_request(question, catalog, settings, lambda _: router))
+                self.assertEqual(decision_signature(decision), expected)
+                self.assertEqual(decision.method, "rules")
+                self.assertEqual(decision.router_outcome, outcome)
+                self.assertEqual(router.calls, 1)
 
     def test_router_failure_is_clarification_not_503(self):
         for router in (
@@ -837,7 +870,7 @@ class BackendTests(unittest.TestCase):
         ):
             with self.subTest(router=router):
                 store, chat = FakeStore([detailed_bond()]), FakeChat()
-                app = create_app(replace(self.settings, router_timeout_seconds=0.01),
+                app = create_app(replace(self.settings, router_enabled=True, router_timeout_seconds=0.01),
                                  store_loader=lambda _: store, chat_factory=lambda _: chat,
                                  router_factory=lambda _: router, index_ready=lambda _: True)
                 response = TestClient(app).post("/v1/chat", json={"question": "Walk me through bond yields"})
@@ -871,7 +904,7 @@ class BackendTests(unittest.TestCase):
 
     def test_model_proposal_cannot_bypass_unknown_constraint(self):
         router = FakeRouter({"intent": "discovery", "filters": [{"field": "ytm", "op": "gt", "value": "10", "source": "above 10%"}]})
-        app = create_app(self.settings, store_loader=lambda _: FakeStore([detailed_bond()]),
+        app = create_app(replace(self.settings, router_enabled=True), store_loader=lambda _: FakeStore([detailed_bond()]),
                          router_factory=lambda _: router, index_ready=lambda _: True)
         response = TestClient(app).post("/v1/chat", json={"question": "Show bonds above 10% with guaranteed liquidity"})
         self.assertEqual(response.json()["citations"], [])
@@ -885,7 +918,7 @@ class BackendTests(unittest.TestCase):
                 {"field": "ytm", "op": "gt", "value": "10.0", "source": "above 10%"},
             ],
         })
-        app = create_app(self.settings,
+        app = create_app(replace(self.settings, router_enabled=True),
                          store_loader=lambda _: FakeStore([detailed_bond(title="Akara Capital Advisors"), detailed_bond("IN0000000002", "Other Finance")]),
                          router_factory=lambda _: router, index_ready=lambda _: True)
         body = TestClient(app).post("/v1/chat", json={"question": "Show Akara bonds above 10%"}).json()
@@ -973,17 +1006,31 @@ class BackendTests(unittest.TestCase):
 
         async def at_threshold(question, *args):
             if question == "19":
-                return QueryRoute(intent="clarification", method="model")
-            return expected_route.model_copy(update={"method": "model"})
+                return QueryRoute(intent="clarification", method="model", router_outcome="model_accepted")
+            return expected_route.model_copy(update={"method": "model", "router_outcome": "model_accepted"})
 
         async def unsafe_at_threshold(question, *args):
             if question == "19":
-                return QueryRoute(intent="discovery", method="model")
-            return expected_route.model_copy(update={"method": "model"})
+                return QueryRoute(intent="discovery", method="model", router_outcome="model_accepted")
+            return expected_route.model_copy(update={"method": "model", "router_outcome": "model_accepted"})
 
         with patch("app.evaluate_routing._route_request", at_threshold), patch("sys.stdout", new_callable=io.StringIO):
             self.assertTrue(asyncio.run(evaluate(path, self.settings)))
         with patch("app.evaluate_routing._route_request", unsafe_at_threshold), patch("sys.stdout", new_callable=io.StringIO):
+            self.assertFalse(asyncio.run(evaluate(path, self.settings)))
+
+        async def skipped_call(question, *args):
+            decision = await at_threshold(question, *args)
+            return decision.model_copy(update={"router_outcome": "not_called"}) if question == "0" else decision
+
+        with patch("app.evaluate_routing._route_request", skipped_call), patch("sys.stdout", new_callable=io.StringIO):
+            self.assertFalse(asyncio.run(evaluate(path, self.settings)))
+
+        async def no_accepted_route(question, *args):
+            decision = await at_threshold(question, *args)
+            return decision.model_copy(update={"method": "rules", "router_outcome": "rules_preserved"})
+
+        with patch("app.evaluate_routing._route_request", no_accepted_route), patch("sys.stdout", new_callable=io.StringIO):
             self.assertFalse(asyncio.run(evaluate(path, self.settings)))
 
     def test_router_configuration_validation_and_gate(self):

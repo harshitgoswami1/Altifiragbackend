@@ -1,7 +1,7 @@
 """Evaluate routing against held-out decisions without retrieval or answer generation.
 
 Usage: uv run python -m app.evaluate_routing tests/routing_eval.json
-Uses the configured Ollama endpoint only for requests needing fallback.
+Uses the configured Ollama endpoint once for every case.
 """
 
 import argparse
@@ -52,7 +52,7 @@ async def evaluate(path: Path, settings: Settings) -> bool:
     for case in cases:
         if set(case["expected"]) != required:
             raise ValueError(f"Incomplete expected decision for {case['id']}")
-    correct = unsafe = model_calls = 0
+    correct = unsafe = model_calls = model_routes = 0
     current = replace(settings, router_enabled=True)
     for case in cases:
         decision = await _route_request(case["question"], catalog, current, None)
@@ -62,15 +62,17 @@ async def evaluate(path: Path, settings: Settings) -> bool:
         critical = unsafe_decision(actual, expected)
         correct += ok
         unsafe += critical
-        model_calls += decision.method == "model"
+        model_calls += decision.router_outcome != "not_called"
+        model_routes += decision.router_outcome == "model_accepted"
         print(json.dumps({"case": case["id"], "correct": ok, "unsafe": critical,
-                          "method": decision.method, "reason": decision.reason,
+                          "method": decision.method, "router_outcome": decision.router_outcome,
+                          "reason": decision.reason,
                           "latency_ms": round(decision.fallback_latency_ms, 1),
                           **({"actual": actual, "expected": expected} if not ok else {})}), flush=True)
     accuracy = correct / len(cases)
-    passed = accuracy >= 0.95 and unsafe == 0 and model_calls > 0
+    passed = accuracy >= 0.95 and unsafe == 0 and model_calls == len(cases) and model_routes > 0
     print(json.dumps({"passed": passed, "accuracy": accuracy, "unsafe_decisions": unsafe,
-                      "model_calls": model_calls, "cases": len(cases)}))
+                      "model_calls": model_calls, "model_routes": model_routes, "cases": len(cases)}))
     return passed
 
 

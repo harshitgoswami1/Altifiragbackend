@@ -324,6 +324,7 @@ def _trace_route_output(route: QueryRoute | None) -> dict[str, Any]:
         return {}
     return {
         "method": route.method, "intent": route.intent, "reason": route.reason,
+        "router_outcome": route.router_outcome,
         "resolved_references": route.isins, "filters": [item.model_dump() for item in route.filters],
         "sorting": route.sorting.model_dump() if route.sorting else None,
         "fallback_latency_ms": route.fallback_latency_ms,
@@ -336,11 +337,11 @@ async def _route_request(
     question: str, catalog: list[BondCandidate], current: Settings,
     router_factory: Callable[[Settings], Any] | None,
 ) -> QueryRoute:
-    decision = route_question(question, catalog)
-    if not decision.needs_model:
-        return decision
-    if not current.router_enabled and router_factory is None:
-        return decision.model_copy(update={"needs_model": False, "reason": "fallback_disabled"})
+    rule_decision = route_question(question, catalog)
+    if not current.router_enabled:
+        if rule_decision.needs_model:
+            return rule_decision.model_copy(update={"needs_model": False, "reason": "fallback_disabled"})
+        return rule_decision
     started = monotonic()
     try:
         async def classify() -> Any:
@@ -351,15 +352,25 @@ async def _route_request(
             return await router.ainvoke([SystemMessage(content=ROUTER_PROMPT), HumanMessage(content=question)])
         output = await asyncio.wait_for(classify(), timeout=current.router_timeout_seconds)
         proposal = output if isinstance(output, RouterProposal) else RouterProposal.model_validate(output)
-        decision = validate_proposal(question, proposal, catalog)
+        validated = validate_proposal(question, proposal, catalog)
+        if rule_decision.needs_model:
+            decision = validated
+            outcome = "model_accepted"
+        else:
+            decision = rule_decision
+            outcome = "rules_preserved"
     except Exception as error:
-        # Classification failure is a recoverable ambiguity, not an embedding outage.
-        decision = QueryRoute(
-            intent="clarification", method="model", reason="router_timeout" if isinstance(error, TimeoutError) else "invalid_router_output",
-            message="Please specify a bond title or ISIN and explicit conditions; I could not safely resolve the complete request.",
-            references=decision.references, limitations=decision.limitations,
-        )
-    return decision.model_copy(update={"fallback_latency_ms": (monotonic() - started) * 1000})
+        outcome = "timeout" if isinstance(error, TimeoutError) else "failed"
+        if rule_decision.needs_model:
+            # Classification failure is a recoverable ambiguity, not an embedding outage.
+            decision = QueryRoute(
+                intent="clarification", method="model", reason="router_timeout" if isinstance(error, TimeoutError) else "invalid_router_output",
+                message="Please specify a bond title or ISIN and explicit conditions; I could not safely resolve the complete request.",
+                references=rule_decision.references, limitations=rule_decision.limitations,
+            )
+        else:
+            decision = rule_decision
+    return decision.model_copy(update={"router_outcome": outcome, "fallback_latency_ms": (monotonic() - started) * 1000})
 
 
 def _context(matches: list[tuple[Any, float]]) -> str:
