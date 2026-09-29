@@ -25,6 +25,13 @@ separate bond and blog retrieval lanes. Set `RAG_MIN_RELEVANCE_SCORE` only
 after calibrating a value from retrieval traces; when unset, no score cutoff is
 applied.
 
+Bond list requests such as "give me bonds greater than 10% rate of return" use
+the snapshot's observed yield to maturity (YTM). For strict `>` comparisons,
+the backend checks the recorded values, excludes records flagged as matured,
+and returns up to four cited examples ordered by ISIN with the total match
+count. The observations do not establish current availability or guaranteed
+returns.
+
 LangSmith tracing is opt-in. Set `LANGSMITH_TRACING=true`,
 `LANGSMITH_API_KEY`, and optionally `LANGSMITH_PROJECT` before starting the
 API. Each `/v1/chat` request is recorded as a `rag_chat` trace, with routed

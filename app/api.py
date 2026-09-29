@@ -1,6 +1,7 @@
 """Stateless, source-grounded JSON API for the local RAG index."""
 
 import asyncio
+from decimal import Decimal
 import json
 from typing import Any, AsyncIterator, Callable
 from urllib.request import urlopen
@@ -16,7 +17,7 @@ from langsmith import traceable
 from app.config import Settings
 from app.corpus import CorpusError
 from app.index import IndexError, ensure_current_index, open_active_store
-from app.retrieval import QueryRoute, bond_catalog, deduplicate_matches, route_question
+from app.retrieval import QueryRoute, bond_catalog, deduplicate_matches, observed_ytm, route_question
 
 
 SYSTEM_PROMPT = """You are the Altifi RAG Assistant, an informational assistant grounded in a fixed snapshot of Altifi blog passages and bond records.
@@ -243,6 +244,44 @@ def _clarification_response(matches: list[tuple[Any, float]]) -> ChatResponse:
     )
 
 
+def _bond_yield_response(store: Any, threshold: Decimal) -> ChatResponse:
+    payload = store.get(where={"document_type": "bond"}, include=["documents", "metadatas"])
+    eligible = []
+    for metadata, document in zip(payload.get("metadatas", []), payload.get("documents", [])):
+        if not metadata or not document or metadata.get("document_type") != "bond":
+            continue
+        yield_value = observed_ytm(document)
+        if yield_value is None or yield_value <= threshold:
+            continue
+        citation = _citation(metadata)
+        if "maturity_matured" not in citation.quality_flags:
+            eligible.append((citation, yield_value))
+
+    eligible.sort(key=lambda item: (item[0].isin or "", item[0].chunk_id))
+    count = len(eligible)
+    if not count:
+        return ChatResponse(
+            answer=(
+                f"I found no bond records in this dated snapshot with observed YTM strictly above {threshold}% p.a. "
+                "after excluding records flagged matured. This does not establish what is currently available."
+            ),
+            citations=[],
+        )
+
+    examples = eligible[:4]
+    lines = [
+        f"I found {count} bond records in the dated snapshot with observed YTM strictly above {threshold}% p.a. "
+        f"and no matured flag. Here are {len(examples)} examples:"
+    ]
+    for number, (citation, yield_value) in enumerate(examples, start=1):
+        lines.append(
+            f"- {citation.title} (ISIN {citation.isin}): observed YTM {yield_value}% p.a., "
+            f"observed {citation.observed_at}. [{number}]"
+        )
+    lines.append("These observations do not establish current availability or guarantee a return.")
+    return ChatResponse(answer="\n".join(lines), citations=[citation for citation, _ in examples])
+
+
 def _context(matches: list[tuple[Any, float]]) -> str:
     blocks = []
     for number, (document, _) in enumerate(matches, start=1):
@@ -324,6 +363,8 @@ def create_app(
                     ),
                     citations=[],
                 )
+            if query_route.route == "bond_yield_filter":
+                return await asyncio.to_thread(_bond_yield_response, store, query_route.yield_threshold)
             if query_route.route == "ambiguous":
                 candidate_matches = await asyncio.to_thread(
                     _retrieve,

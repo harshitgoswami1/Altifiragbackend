@@ -1,6 +1,7 @@
 """Deterministic routing and result shaping for mixed blog/bond retrieval."""
 
 from dataclasses import dataclass
+from decimal import Decimal
 import re
 import unicodedata
 from typing import Any, Iterable, Literal
@@ -8,7 +9,13 @@ from typing import Any, Iterable, Literal
 
 ISIN_PATTERN = re.compile(r"(?<![A-Z0-9])IN[A-Z0-9]{10}(?![A-Z0-9])", re.IGNORECASE)
 
-RouteName = Literal["bond", "blog", "mixed", "ambiguous", "unknown_bond"]
+RouteName = Literal["bond", "bond_yield_filter", "blog", "mixed", "ambiguous", "unknown_bond"]
+
+BOND_YTM_PATTERN = re.compile(r"^Observed yield to maturity:\s*(\d+(?:\.\d+)?)% p\.a\.\s*$", re.MULTILINE)
+YIELD_THRESHOLD_PATTERN = re.compile(
+    r"(?:\b(?:greater than|more than|above|over)\b|>)\s*(\d+(?:\.\d+)?)\s*%",
+    re.IGNORECASE,
+)
 
 GENERIC_TITLE_TOKENS = {
     "a", "about", "an", "and", "are", "can", "could", "details", "do", "does",
@@ -49,6 +56,7 @@ class QueryRoute:
     detected_isin: str | None = None
     resolved_bond: BondCandidate | None = None
     reason: str = ""
+    yield_threshold: Decimal | None = None
 
     @property
     def metadata_filter(self) -> dict[str, Any] | None:
@@ -158,6 +166,23 @@ def _is_mixed_question(question: str) -> bool:
     return any(marker in normalized for marker in MIXED_MARKERS)
 
 
+def _bond_yield_threshold(question: str) -> Decimal | None:
+    normalized = normalize_text(question)
+    if not re.search(r"\bbonds?\b", normalized):
+        return None
+    if not re.search(r"\b(?:give me|show|list|find|which bonds?|what bonds?|any bonds?)\b", normalized):
+        return None
+    if re.search(r"\b(?:why|how|explain|mean|meaning|coupon)\b|\bwhat does\b", normalized):
+        return None
+    match = YIELD_THRESHOLD_PATTERN.search(question)
+    return Decimal(match.group(1)) if match else None
+
+
+def observed_ytm(text: str) -> Decimal | None:
+    values = BOND_YTM_PATTERN.findall(text)
+    return Decimal(values[0]) if len(values) == 1 else None
+
+
 def route_question(question: str, catalog: list[BondCandidate]) -> QueryRoute:
     detected_isin = extract_isin(question)
     if detected_isin:
@@ -171,6 +196,9 @@ def route_question(question: str, catalog: list[BondCandidate]) -> QueryRoute:
     if resolved is not None:
         route = "mixed" if _is_mixed_question(question) else "bond"
         return QueryRoute(route, resolved_bond=resolved, reason="title")
+    threshold = _bond_yield_threshold(question)
+    if threshold is not None:
+        return QueryRoute("bond_yield_filter", reason="yield_threshold", yield_threshold=threshold)
     if ambiguous or _has_bond_entity_hint(question, catalog):
         return QueryRoute("ambiguous", reason="bond_name")
     return QueryRoute("blog", reason="general_question")

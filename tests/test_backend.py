@@ -41,7 +41,7 @@ def record(
     }
 
 
-def bond_record(isin="IN0020010081", title="10.18% Government Of India 11 Sep 2026"):
+def bond_record(isin="IN0020010081", title="10.18% Government Of India 11 Sep 2026", ytm="5.7"):
     return record(
         f"bond_{isin}",
         document_id=f"bond_{isin}",
@@ -53,7 +53,7 @@ def bond_record(isin="IN0020010081", title="10.18% Government Of India 11 Sep 20
         quality_flags=[],
         embedding_text=(
             f"Bond: {title}\nISIN: {isin}\n"
-            "Coupon rate: 10.18% p.a.\nObserved yield to maturity: 5.7% p.a."
+            f"Coupon rate: 10.18% p.a.\nObserved yield to maturity: {ytm}% p.a."
         ),
     )
 
@@ -86,12 +86,10 @@ class FakeStore:
         )
 
     def get(self, where=None, include=None):
+        rows = [row for row in self.rows if self._matches_filter(row, where)]
         return {
-            "metadatas": [
-                chroma_metadata(row)
-                for row in self.rows
-                if self._matches_filter(row, where)
-            ]
+            "metadatas": [chroma_metadata(row) for row in rows],
+            "documents": [row["embedding_text"] for row in rows] if include and "documents" in include else None,
         }
 
     def similarity_search_with_relevance_scores(self, question, k, filter=None):
@@ -379,6 +377,89 @@ class BackendTests(unittest.TestCase):
 
         self.assertEqual(route.route, "bond")
         self.assertEqual(route.resolved_bond.isin, candidate["isin"])
+
+    def test_numeric_bond_search_uses_strict_observed_ytm_and_bond_citations(self):
+        rows = [record("blog_chunk", title="Bonds with high returns")]
+        rows += [
+            bond_record(f"IN000000000{number}", f"Issuer {number}", ytm)
+            for number, ytm in [(5, "13"), (3, "11"), (1, "10.1"), (4, "12"), (2, "10.2")]
+        ]
+        rows += [
+            bond_record("IN0000000006", "Equal yield", "10"),
+            bond_record("IN0000000007", "Lower yield", "9.9"),
+            bond_record("IN0000000008", "Matured yield", "14"),
+            bond_record("IN0000000009", "Malformed yield", "unknown"),
+        ]
+        rows[-2]["quality_flags"] = ["maturity_matured"]
+        client, store, fake_chat = self.routed_client(rows)
+
+        for question in (
+            "give me bonds which give greater than 10% rate of return",
+            "show bonds above 10% yield",
+            "list bonds over 10% YTM",
+            "find bonds > 10%",
+        ):
+            with self.subTest(question=question):
+                response = client.post("/v1/chat", json={"question": question})
+                self.assertEqual(response.status_code, 200)
+                body = response.json()
+                self.assertIn("I found 5 bond records", body["answer"])
+                self.assertIn("Here are 4 examples", body["answer"])
+                self.assertEqual(
+                    [item["isin"] for item in body["citations"]],
+                    [f"IN000000000{number}" for number in range(1, 5)],
+                )
+                self.assertEqual({item["document_type"] for item in body["citations"]}, {"bond"})
+                self.assertIn("observed YTM 10.1% p.a.", body["answer"])
+                self.assertNotIn("Equal yield", body["answer"])
+                self.assertNotIn("Matured yield", body["answer"])
+        self.assertEqual(store.calls, [])
+        self.assertEqual(fake_chat.invocations, 0)
+
+    def test_numeric_bond_search_with_no_matches_has_no_citations(self):
+        client, store, fake_chat = self.routed_client([
+            bond_record(ytm="10"),
+            record("blog_chunk", title="High yield bonds"),
+        ])
+
+        response = client.post("/v1/chat", json={"question": "which bonds yield greater than 10%?"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("no bond records", response.json()["answer"])
+        self.assertEqual(response.json()["citations"], [])
+        self.assertEqual(store.calls, [])
+        self.assertEqual(fake_chat.invocations, 0)
+
+    def test_numeric_bond_search_keeps_exact_isin_and_explanation_routes(self):
+        bond = bond_record(ytm="12")
+        blog = record("blog_chunk", title="Why yields change")
+        client, store, _ = self.routed_client([bond, blog])
+
+        exact = client.post(
+            "/v1/chat",
+            json={"question": "show bonds above 10% rate of return for IN0020010081"},
+        )
+        explanation = client.post("/v1/chat", json={"question": "Why do bonds yield over 10%?"})
+
+        self.assertEqual([item["document_type"] for item in exact.json()["citations"]], ["bond"])
+        self.assertEqual(store.calls[0]["filter"]["$and"][1], {"isin": {"$eq": "IN0020010081"}})
+        self.assertEqual([item["document_type"] for item in explanation.json()["citations"]], ["blog"])
+
+    def test_numeric_bond_search_stream_matches_chat(self):
+        client, _, _ = self.routed_client([bond_record(ytm="11.2")])
+        request = {"question": "give me bonds greater than 10% rate of return"}
+
+        response = client.post("/v1/chat", json=request).json()
+        stream = client.post("/v1/chat/stream", json=request)
+        events = [
+            (name.removeprefix("event: "), json.loads(data.removeprefix("data: ")))
+            for name, data in (block.splitlines() for block in stream.text.strip().split("\n\n"))
+        ]
+
+        self.assertEqual(stream.status_code, 200)
+        self.assertEqual([name for name, _ in events], ["citations", "token", "done"])
+        self.assertEqual(events[0][1], response["citations"])
+        self.assertEqual(events[1][1]["text"], response["answer"])
 
     def test_blog_results_are_deduplicated_by_document(self):
         first = Document(page_content="first", metadata={"document_id": "blog_1", "chunk_id": "chunk_1"})
