@@ -1,0 +1,737 @@
+{
+  "catalog": [
+    {
+      "isin": "IN0000000001",
+      "title": "Meridian Finance",
+      "document_type": "bond"
+    },
+    {
+      "isin": "IN0000000002",
+      "title": "Harbor Credit",
+      "document_type": "bond"
+    }
+  ],
+  "cases": [
+    {
+      "id": "education-01",
+      "question": "Walk me through the relationship between bond prices and yields.",
+      "expected": {
+        "intent": "education",
+        "isins": [],
+        "filters": [],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "education-02",
+      "question": "I need a primer on credit risk in bonds.",
+      "expected": {
+        "intent": "education",
+        "isins": [],
+        "filters": [],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "education-03",
+      "question": "Give me some background on fixed deposits.",
+      "expected": {
+        "intent": "education",
+        "isins": [],
+        "filters": [],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "education-04",
+      "question": "Break down the idea of liquidity for bond holders.",
+      "expected": {
+        "intent": "education",
+        "isins": [],
+        "filters": [],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "education-05",
+      "question": "A beginner-friendly overview of coupon payments would help.",
+      "expected": {
+        "intent": "education",
+        "isins": [],
+        "filters": [],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "education-06",
+      "question": "Help me make sense of credit ratings.",
+      "expected": {
+        "intent": "education",
+        "isins": [],
+        "filters": [],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "education-07",
+      "question": "Teach me the basics of portfolio diversification.",
+      "expected": {
+        "intent": "education",
+        "isins": [],
+        "filters": [],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "education-08",
+      "question": "Summarize how bond interest works.",
+      "expected": {
+        "intent": "education",
+        "isins": [],
+        "filters": [],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "education-09",
+      "question": "Why can a bond have a coupon above 8% and a yield below 8%?",
+      "expected": {
+        "intent": "education",
+        "isins": [],
+        "filters": [],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "education-10",
+      "question": "How are bonds different from fixed deposits?",
+      "expected": {
+        "intent": "education",
+        "isins": [],
+        "filters": [],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "lookup-01",
+      "question": "Tell me about IN0000000001.",
+      "expected": {
+        "intent": "lookup",
+        "isins": [
+          "IN0000000001"
+        ],
+        "filters": [],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "lookup-02",
+      "question": "What is the coupon of IN0000000002?",
+      "expected": {
+        "intent": "lookup",
+        "isins": [
+          "IN0000000002"
+        ],
+        "filters": [],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [
+          "coupon"
+        ],
+        "limitations": []
+      }
+    },
+    {
+      "id": "comparison-01",
+      "question": "Compare the rating of IN0000000001 and IN0000000002.",
+      "expected": {
+        "intent": "comparison",
+        "isins": [
+          "IN0000000001",
+          "IN0000000002"
+        ],
+        "filters": [],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [
+          "rating"
+        ],
+        "limitations": []
+      }
+    },
+    {
+      "id": "comparison-02",
+      "question": "IN0000000001 versus IN0000000002",
+      "expected": {
+        "intent": "comparison",
+        "isins": [
+          "IN0000000001",
+          "IN0000000002"
+        ],
+        "filters": [],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "search-01",
+      "question": "Please list three bonds with YTM at least 9 percent.",
+      "expected": {
+        "intent": "discovery",
+        "isins": [],
+        "filters": [
+          [
+            "ytm",
+            "gte",
+            "9"
+          ]
+        ],
+        "sorting": null,
+        "result_limit": 3,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "search-02",
+      "question": "I need bonds with coupon below 7% and monthly payments.",
+      "expected": {
+        "intent": "discovery",
+        "isins": [],
+        "filters": [
+          [
+            "coupon",
+            "lt",
+            "7"
+          ],
+          [
+            "payment_frequency",
+            "eq",
+            "monthly"
+          ]
+        ],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "search-03",
+      "question": "Give me five lowest-YTM bonds with YTM between 8% and 10%.",
+      "expected": {
+        "intent": "discovery",
+        "isins": [],
+        "filters": [
+          [
+            "ytm",
+            "gte",
+            "8"
+          ],
+          [
+            "ytm",
+            "lte",
+            "10"
+          ]
+        ],
+        "sorting": [
+          "ytm",
+          false
+        ],
+        "result_limit": 5,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "search-04",
+      "question": "Find corporate bonds rated AAA.",
+      "expected": {
+        "intent": "discovery",
+        "isins": [],
+        "filters": [
+          [
+            "category",
+            "eq",
+            "corporate-bonds"
+          ],
+          [
+            "rating",
+            "eq",
+            "aaa"
+          ]
+        ],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "search-05",
+      "question": "List bonds maturing in 2031.",
+      "expected": {
+        "intent": "discovery",
+        "isins": [],
+        "filters": [
+          [
+            "maturity",
+            "gte",
+            "2031-01-01"
+          ],
+          [
+            "maturity",
+            "lte",
+            "2031-12-31"
+          ]
+        ],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "search-06",
+      "question": "Show bonds with minimum investment at most 2 lakh.",
+      "expected": {
+        "intent": "discovery",
+        "isins": [],
+        "filters": [
+          [
+            "minimum_investment",
+            "lte",
+            "200000"
+          ]
+        ],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "search-07",
+      "question": "Find quarterly secured bonds above 9% YTM.",
+      "expected": {
+        "intent": "discovery",
+        "isins": [],
+        "filters": [
+          [
+            "payment_frequency",
+            "eq",
+            "quarterly"
+          ],
+          [
+            "security",
+            "eq",
+            "secured"
+          ],
+          [
+            "ytm",
+            "gt",
+            "9"
+          ]
+        ],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "search-08",
+      "question": "List bonds with YTM over 9% including matured records.",
+      "expected": {
+        "intent": "discovery",
+        "isins": [],
+        "filters": [
+          [
+            "ytm",
+            "gt",
+            "9"
+          ]
+        ],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": true,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "search-09",
+      "question": "Show Meridian Finance bonds.",
+      "expected": {
+        "intent": "discovery",
+        "isins": [
+          "IN0000000001"
+        ],
+        "filters": [
+          [
+            "title",
+            "eq",
+            "meridian finance"
+          ]
+        ],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "search-10",
+      "question": "Show bonds with coupon exactly 9.5%.",
+      "expected": {
+        "intent": "discovery",
+        "isins": [],
+        "filters": [
+          [
+            "coupon",
+            "eq",
+            "9.5"
+          ]
+        ],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "mixed-01",
+      "question": "List bonds above 9% and explain the risks.",
+      "expected": {
+        "intent": "discovery",
+        "isins": [],
+        "filters": [
+          [
+            "ytm",
+            "gt",
+            "9"
+          ]
+        ],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": true,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "mixed-02",
+      "question": "What does the yield of IN0000000001 mean?",
+      "expected": {
+        "intent": "lookup",
+        "isins": [
+          "IN0000000001"
+        ],
+        "filters": [],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": true,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "clarify-01",
+      "question": "What about its maturity date?",
+      "expected": {
+        "intent": "clarification",
+        "isins": [],
+        "filters": [],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "clarify-02",
+      "question": "Show bonds with a guaranteed return above 9%.",
+      "expected": {
+        "intent": "clarification",
+        "isins": [],
+        "filters": [],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "clarify-03",
+      "question": "Show bonds with YTM above 11% and below 8%.",
+      "expected": {
+        "intent": "clarification",
+        "isins": [],
+        "filters": [],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "clarify-04",
+      "question": "Find bonds maturing within the next year.",
+      "expected": {
+        "intent": "clarification",
+        "isins": [],
+        "filters": [],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "clarify-05",
+      "question": "Show bonds that are AAA or secured.",
+      "expected": {
+        "intent": "clarification",
+        "isins": [],
+        "filters": [],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "clarify-06",
+      "question": "Show bonds with ratings better than BBB.",
+      "expected": {
+        "intent": "clarification",
+        "isins": [],
+        "filters": [],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "clarify-07",
+      "question": "Find the safest bonds.",
+      "expected": {
+        "intent": "clarification",
+        "isins": [],
+        "filters": [],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "clarify-08",
+      "question": "Show bonds above 9% with principal protection.",
+      "expected": {
+        "intent": "clarification",
+        "isins": [],
+        "filters": [],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "clarify-09",
+      "question": "Show bonds coupon above 8% YTM.",
+      "expected": {
+        "intent": "clarification",
+        "isins": [],
+        "filters": [],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "clarify-10",
+      "question": "Show bonds above 9% and explain risks, but only monthly payments.",
+      "expected": {
+        "intent": "clarification",
+        "isins": [],
+        "filters": [],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "capability-01",
+      "question": "Hello!",
+      "expected": {
+        "intent": "capability",
+        "isins": [],
+        "filters": [],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "capability-02",
+      "question": "What is available today?",
+      "expected": {
+        "intent": "capability",
+        "isins": [],
+        "filters": [],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": [
+          "live_data"
+        ]
+      }
+    },
+    {
+      "id": "capability-03",
+      "question": "Which should I buy?",
+      "expected": {
+        "intent": "capability",
+        "isins": [],
+        "filters": [],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": [
+          "personal_advice"
+        ]
+      }
+    },
+    {
+      "id": "capability-04",
+      "question": "Write a recipe for soup.",
+      "expected": {
+        "intent": "capability",
+        "isins": [],
+        "filters": [],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    }
+  ]
+}
