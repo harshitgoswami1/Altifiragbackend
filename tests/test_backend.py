@@ -395,6 +395,7 @@ class BackendTests(unittest.TestCase):
 
         for question in (
             "give me bonds which give greater than 10% rate of return",
+            "bonds with more than 10% rate of return",
             "show bonds above 10% yield",
             "list bonds over 10% YTM",
             "find bonds > 10%",

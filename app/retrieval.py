@@ -170,7 +170,8 @@ def _bond_yield_threshold(question: str) -> Decimal | None:
     normalized = normalize_text(question)
     if not re.search(r"\bbonds?\b", normalized):
         return None
-    if not re.search(r"\b(?:give me|show|list|find|which bonds?|what bonds?|any bonds?)\b", normalized):
+    list_request = re.search(r"\b(?:give me|show|list|find|which bonds?|what bonds?|any bonds?)\b", normalized)
+    if not list_request and not normalized.startswith(("bond ", "bonds ")):
         return None
     if re.search(r"\b(?:why|how|explain|mean|meaning|coupon)\b|\bwhat does\b", normalized):
         return None
