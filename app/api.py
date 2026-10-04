@@ -1,4 +1,4 @@
-"""Stateless, source-grounded JSON API for the local RAG index."""
+"""Stateless, source-grounded API for bond SQL and finance text retrieval."""
 
 import asyncio
 from dataclasses import dataclass
@@ -19,14 +19,15 @@ from langsmith import traceable
 from app.config import Settings
 from app.corpus import CorpusError
 from app.index import IndexError, ensure_current_index, open_active_store
-from app.bonds import BondObservation, LABELS, display_value, parse_bond, screen_bonds
+from app.bonds import BondObservation, LABELS, SQL_FIELDS, display_value
 from app.retrieval import (
-    BondCandidate, ISIN_PATTERN, QueryRoute, ROUTER_PROMPT, RouterProposal, bond_catalog, deduplicate_matches,
+    BondCandidate, QueryRoute, ROUTER_PROMPT, RouterProposal, bond_catalog, deduplicate_matches,
     route_question, validate_proposal,
 )
+from app.sql_bonds import BondRepository, SearchResult
 
 
-SYSTEM_PROMPT = """You are the Altifi RAG Assistant, an informational assistant grounded in a fixed snapshot of Altifi blog passages and bond records.
+SYSTEM_PROMPT = """You are the Altifi assistant, grounded in fetched bond database rows and audited Altifi blog passages.
 
 Your job is to answer the user's question accurately, clearly, and conservatively using only the numbered source blocks provided in the user message. The source blocks are the complete evidence available for this response. Retrieval returns only a small set of relevant chunks, so never assume that the supplied sources are exhaustive.
 
@@ -44,8 +45,8 @@ Your job is to answer the user's question accurately, clearly, and conservativel
 
 - `Observed at` is the time the article or bond record was captured. It is not automatically the publication date, transaction date, maturity date, or current time.
 - Dates written in the source text retain their source meaning. Explain which date you are using when ambiguity is possible.
-- Bond records are structured observations for a specific instrument and ISIN. Their coupon, yield to maturity, face value, minimum investment, rating, security, category, issue date, maturity date, and payment frequencies are not guarantees, recommendations, current quotes, or proof of availability.
-- A `maturity_matured` quality flag means the record was classified as matured at the relevant observation; do not describe that as currently available or currently unavailable unless the source explicitly says so.
+- Bond database rows are fetched observations for a specific ISIN. Their coupon, yield to maturity, face value, minimum investment, issue date, maturity date, status, and active flag are not guarantees, recommendations, live quotes, or proof of purchase availability.
+- The active flag describes the source table, not current purchase availability. Cite the fetched timestamp when freshness matters.
 - A `repeated_source_title` flag means different source records share a title; do not merge them or assume they have identical content.
 - Blog passages may be educational or promotional. Attribute claims to the source and avoid upgrading marketing language into guarantees or objective fact.
 
@@ -55,8 +56,8 @@ Your job is to answer the user's question accurately, clearly, and conservativel
 - Do not provide personalized investment advice, personalized tax advice, legal advice, or trading advice. Do not tell a user what they personally should buy, sell, hold, switch to, or allocate, and do not claim an investment is suitable for them.
 - Do not promise safety, approval, liquidity, returns, capital protection, tax outcomes, or future performance. Clearly distinguish “rated,” “secured,” “government,” “matured,” and similar source labels from guarantees.
 - For suitability questions, explain the general factors the sources identify and state that a qualified professional should assess the user's circumstances.
-- You may compare retrieved instruments or concepts when every compared value is explicitly present, but label the comparison as limited to the supplied sources. You may explain deterministic snapshot rankings supplied by the backend, using exactly their stated eligible comparison set, recorded values, and exclusions. Never extend these to market-wide rankings or claims of suitability, best investment, or safety.
-- Do not answer requests for live prices, live yields, live inventory, current availability, real-time market conditions, or exhaustive market-wide rankings. Explain that this backend contains a dated snapshot and cannot verify live data.
+- You may compare retrieved instruments or concepts when every compared value is explicitly present, but label the comparison as limited to the supplied sources. You may explain deterministic database rankings supplied by the backend, using exactly their stated comparison set, recorded values, and exclusions. Never extend these to market-wide rankings or claims of suitability, best investment, or safety.
+- Do not answer requests for live prices, live yields, live inventory, current availability, real-time market conditions, or exhaustive market-wide rankings. Explain that fetched database observations cannot verify live market data.
 
 ## Citation rules
 
@@ -227,9 +228,9 @@ def _citation(metadata: dict[str, Any]) -> Citation:
     )
 
 
-CAPABILITY_MESSAGE = "I can explain financial concepts from Altifi sources, look up bonds by title or ISIN, compare recorded instruments, and search this dated bond snapshot."
+CAPABILITY_MESSAGE = "I can explain financial concepts from Altifi text, look up bonds by issuer or ISIN, compare recorded instruments, and search the bond database."
 LIMITATION_MESSAGES = {
-    "live_data": "This backend contains a dated snapshot and cannot verify live data, current prices, yields, or availability.",
+    "live_data": "The database contains fetched bond observations; it cannot verify live prices, yields, or purchase availability.",
     "personal_advice": "I cannot provide personalized investment advice. A qualified professional should assess your circumstances; I can explain source-supported general factors.",
 }
 
@@ -241,13 +242,6 @@ class PreparedChat:
     citations: list[Citation]
     prefix: str = ""
     deterministic: ChatResponse | None = None
-
-
-def _snapshot_bonds(store: Any) -> list[BondObservation]:
-    payload = store.get(where={"document_type": "bond"}, include=["documents", "metadatas"])
-    return [parse_bond(metadata, document) for metadata, document in
-            zip(payload.get("metadatas") or [], payload.get("documents") or [])
-            if metadata and document and metadata.get("document_type") == "bond"]
 
 
 def _bond_matches(records: list[BondObservation]) -> list[tuple[Document, float]]:
@@ -268,23 +262,14 @@ def _clarification_response(route: QueryRoute, records: list[BondObservation]) -
     return ChatResponse(answer="\n".join(lines), citations=[_citation(record.metadata) for record in candidates])
 
 
-def _search_response(route: QueryRoute, records: list[BondObservation]) -> tuple[ChatResponse, list[BondObservation]]:
-    # Title restrictions are filters; only explicitly named ISINs restrict IDs.
-    explicit_isins = [candidate.isin for ref in route.references
-                      if ISIN_PATTERN.fullmatch(ref.source)
-                      for candidate in ref.candidates]
-    eligible, missing = screen_bonds(records, route.filters, route.sorting, route.include_matured, explicit_isins or None)
-    examples = eligible[:min(route.result_limit, 20)]
-    count = len(eligible)
+def _search_response(route: QueryRoute, result: SearchResult) -> tuple[ChatResponse, list[BondObservation]]:
+    examples = result.records
+    count = result.count
     description = "; ".join(dict.fromkeys(condition.source for condition in route.filters)) or "all bond records"
-    lines = [f"I found {count} bond record{'s' if count != 1 else ''} in the dated snapshot matching: {description}."
-             if count else f"I found no bond records in the dated snapshot matching: {description}."]
-    if not route.include_matured:
-        lines.append("Records flagged matured were excluded; this does not establish current availability.")
-    else:
-        lines.append("Records flagged matured are included.")
-    if missing:
-        lines.append(f"Excluded {missing} otherwise in-scope records with missing or malformed fields required for filtering or ordering.")
+    lines = [f"I found {count} bond record{'s' if count != 1 else ''} in the database matching: {description}."
+             if count else f"I found no bond records in the database matching: {description}."]
+    if not any(item.field == "status" for item in route.filters) and not route.include_matured:
+        lines.append("Only rows marked active in the source table were searched; this does not establish purchase availability.")
     if examples:
         lines.append("Here is 1 example:" if len(examples) == 1 else f"Here are {len(examples)} examples:")
     if route.result_limit > 20:
@@ -293,29 +278,29 @@ def _search_response(route: QueryRoute, records: list[BondObservation]) -> tuple
                                  *route.requested_fields, *([route.sorting.field] if route.sorting else [])]))
     for number, record in enumerate(examples, start=1):
         values = "; ".join(f"{'observed YTM' if field == 'ytm' else LABELS[field]} {display_value(record, field)}" for field in fields)
-        flag = "; flagged matured" if "maturity_matured" in record.flags else ""
-        lines.append(f"- {record.metadata.get('title')} (ISIN {record.metadata.get('isin')}): {values}; "
-                     f"observed {record.metadata.get('observed_at')}{flag}. [{number}]")
+        flag = "; inactive in source table" if "inactive" in record.flags else ""
+        lines.append(f"- {record.metadata.get('title')}: {values}; status {display_value(record, 'status')}; "
+                     f"fetched {record.metadata.get('observed_at')}{flag}. [{number}]")
     if route.sorting:
         direction = "descending" if route.sorting.descending else "ascending"
-        lines.append(f"Ordered by {LABELS[route.sorting.field]} ({direction}) across the {count} eligible snapshot records; ties use ISIN. This is not a market-wide ranking.")
+        lines.append(f"Ordered by {LABELS[route.sorting.field]} ({direction}) across the {count} matching database records; ties use ISIN. This is not a market-wide ranking.")
     else:
         lines.append("Examples are ordered by ISIN.")
     if any(condition.field == "ytm" for condition in route.filters):
         lines.append("Rate of return is interpreted as observed yield to maturity (YTM).")
-    lines.append("These observations do not establish current availability or guarantee a return.")
+    lines.append("These fetched observations do not establish current availability or guarantee a return.")
     return ChatResponse(answer="\n\n".join(lines), citations=[_citation(record.metadata) for record in examples]), examples
 
 
 def _comparison_response(route: QueryRoute, records: list[BondObservation]) -> ChatResponse:
-    fields = route.requested_fields or [field for field in LABELS if field != "title"]
-    lines = ["Comparison limited to the supplied snapshot records:"]
+    fields = route.requested_fields or [field for field in LABELS if field in SQL_FIELDS and field != "title"]
+    lines = ["Comparison limited to the fetched database records:"]
     for number, record in enumerate(records, start=1):
-        flag = " (flagged matured)" if "maturity_matured" in record.flags else ""
-        lines.append(f"{record.metadata.get('title')} — ISIN {record.metadata.get('isin')}{flag}; observed {record.metadata.get('observed_at')}. [{number}]")
+        flag = " (inactive in source table)" if "inactive" in record.flags else ""
+        lines.append(f"{record.metadata.get('title')}{flag}; fetched {record.metadata.get('observed_at')}. [{number}]")
         for field in fields:
             lines.append(f"- {LABELS[field]}: {display_value(record, field)}. [{number}]")
-    lines.append("These recorded values do not establish current availability or suitability.")
+    lines.append("These fetched values do not establish current availability or suitability.")
     return ChatResponse(answer="\n".join(lines), citations=[_citation(record.metadata) for record in records])
 
 
@@ -332,6 +317,23 @@ def _trace_route_output(route: QueryRoute | None) -> dict[str, Any]:
     }
 
 
+def _sql_supported_route(route: QueryRoute) -> QueryRoute:
+    if route.intent not in {"discovery", "lookup", "comparison"}:
+        return route
+    unavailable = {item.field for item in route.filters if item.field not in SQL_FIELDS}
+    unavailable.update(field for field in route.requested_fields if field not in SQL_FIELDS)
+    if route.sorting and route.sorting.field not in SQL_FIELDS:
+        unavailable.add(route.sorting.field)
+    if not unavailable:
+        return route
+    names = ", ".join(sorted(LABELS[field] for field in unavailable))
+    return QueryRoute(
+        intent="clarification", reason="unavailable_field", method=route.method,
+        router_outcome=route.router_outcome, limitations=route.limitations,
+        message=f"Please ask using fields recorded in the bond database. {names} is unavailable.",
+    )
+
+
 @traceable(name="route_question", run_type="chain", process_inputs=lambda inputs: {"question": inputs.get("question", "")}, process_outputs=_trace_route_output)
 async def _route_request(
     question: str, catalog: list[BondCandidate], current: Settings,
@@ -340,8 +342,8 @@ async def _route_request(
     rule_decision = route_question(question, catalog)
     if not current.router_enabled:
         if rule_decision.needs_model:
-            return rule_decision.model_copy(update={"needs_model": False, "reason": "fallback_disabled"})
-        return rule_decision
+            return _sql_supported_route(rule_decision.model_copy(update={"needs_model": False, "reason": "fallback_disabled"}))
+        return _sql_supported_route(rule_decision)
     started = monotonic()
     try:
         async def classify() -> Any:
@@ -353,7 +355,7 @@ async def _route_request(
         output = await asyncio.wait_for(classify(), timeout=current.router_timeout_seconds)
         proposal = output if isinstance(output, RouterProposal) else RouterProposal.model_validate(output)
         validated = validate_proposal(question, proposal, catalog)
-        if rule_decision.needs_model:
+        if validated.intent == "discovery" or rule_decision.needs_model:
             decision = validated
             outcome = "model_accepted"
         else:
@@ -370,7 +372,7 @@ async def _route_request(
             )
         else:
             decision = rule_decision
-    return decision.model_copy(update={"router_outcome": outcome, "fallback_latency_ms": (monotonic() - started) * 1000})
+    return _sql_supported_route(decision.model_copy(update={"router_outcome": outcome, "fallback_latency_ms": (monotonic() - started) * 1000}))
 
 
 def _context(matches: list[tuple[Any, float]]) -> str:
@@ -399,6 +401,8 @@ def create_app(
     index_ready: Callable[[Settings], bool] | None = None,
     ollama_probe: Callable[[Settings], bool] | None = None,
     router_factory: Callable[[Settings], Any] | None = None,
+    bond_loader: Callable[[Settings], Any] | None = None,
+    bond_probe: Callable[[Settings], bool] | None = None,
 ) -> FastAPI:
     def current_settings() -> Settings:
         return settings if settings is not None else Settings.from_env()
@@ -412,8 +416,15 @@ def create_app(
     chat_factory = chat_factory or (lambda current: ChatOllama(model=current.chat_model, base_url=current.ollama_base_url))
     index_ready = index_ready or (lambda current: _index_is_ready(current))
     ollama_probe = ollama_probe or _ollama_reachable
+    bond_loader = bond_loader or (lambda current: BondRepository(current.database_url))
+    if bond_probe is None:
+        def bond_probe(current: Settings) -> bool:
+            try:
+                return bool(bond_loader(current).reachable())
+            except Exception:
+                return False
 
-    app = FastAPI(title="Standalone RAG Backend", version="0.1.0")
+    app = FastAPI(title="Altifi Finance Backend", version="0.1.0")
 
     @app.get("/healthz")
     async def health():
@@ -421,14 +432,16 @@ def create_app(
             current = current_settings()
         except RuntimeError as error:
             return JSONResponse(status_code=503, content={"ready": False, "detail": str(error)})
-        index_ok, ollama_ok = await asyncio.gather(
+        index_ok, ollama_ok, database_ok = await asyncio.gather(
             asyncio.to_thread(index_ready, current),
             asyncio.to_thread(ollama_probe, current),
+            asyncio.to_thread(bond_probe, current),
         )
         payload = {
-            "ready": index_ok and ollama_ok,
+            "ready": index_ok and ollama_ok and database_ok,
             "index_ready": index_ok,
             "ollama_reachable": ollama_ok,
+            "database_reachable": database_ok,
             "embedding_model": current.embedding_model,
             "chat_model": current.chat_model,
         }
@@ -441,37 +454,55 @@ def create_app(
             current = current_settings()
         except RuntimeError as error:
             raise HTTPException(status_code=503, detail=str(error))
-        if not await asyncio.to_thread(index_ready, current):
-            raise HTTPException(status_code=503, detail="RAG index is unavailable or stale; run python -m app.index")
         try:
-            store = await asyncio.to_thread(store_loader, current)
-            records = await asyncio.to_thread(_snapshot_bonds, store)
-        except (CorpusError, IndexError):
-            raise HTTPException(status_code=503, detail="RAG index is unavailable or stale; run python -m app.index")
+            bonds = bond_loader(current)
+            catalog_rows = await asyncio.to_thread(bonds.catalog)
         except Exception:
-            raise HTTPException(status_code=503, detail="The snapshot store is unavailable")
-        catalog = bond_catalog(record.metadata for record in records)
+            raise HTTPException(status_code=503, detail="The bond database is unavailable")
+        catalog = bond_catalog(catalog_rows)
         route = await _route_request(request.question, catalog, current, router_factory)
         limitation = "\n\n".join(LIMITATION_MESSAGES[item] for item in route.limitations)
         if route.intent == "clarification":
-            response = _clarification_response(route, records)
+            try:
+                candidates = await asyncio.to_thread(bonds.by_isins, route.isins) if route.reason == "ambiguous_reference" else []
+            except Exception:
+                raise HTTPException(status_code=503, detail="The bond database is unavailable")
+            response = _clarification_response(route, candidates)
             if limitation:
                 response.answer = limitation + "\n\n" + response.answer
             return response
         if route.intent == "capability":
             return ChatResponse(answer="\n\n".join(filter(None, [limitation, CAPABILITY_MESSAGE])), citations=[])
 
+        unavailable = [item.field for item in route.filters if item.field not in SQL_FIELDS]
+        unavailable += [field for field in route.requested_fields if field not in SQL_FIELDS]
+        if route.sorting and route.sorting.field not in SQL_FIELDS:
+            unavailable.append(route.sorting.field)
+        if unavailable:
+            names = ", ".join(dict.fromkeys(LABELS[field] for field in unavailable))
+            return ChatResponse(answer=f"Please ask using fields recorded in the bond database. {names} is not available.", citations=[])
+
         prefix = limitation
         matches = []
         deterministic = None
-        if route.intent == "discovery":
-            deterministic, selected = _search_response(route, records)
-            matches = _bond_matches(selected)
-        elif route.intent in {"lookup", "comparison"}:
-            selected = [record for isin in route.isins for record in records if record.metadata.get("isin") == isin]
-            matches = _bond_matches(selected)
-            if route.intent == "comparison":
-                deterministic = _comparison_response(route, selected)
+        try:
+            if route.intent == "discovery":
+                result = await asyncio.to_thread(bonds.search, route)
+                deterministic, selected = _search_response(route, result)
+                matches = _bond_matches(selected)
+            elif route.intent in {"lookup", "comparison"}:
+                selected = await asyncio.to_thread(bonds.by_isins, route.isins)
+                matches = _bond_matches(selected)
+                if route.intent == "comparison":
+                    deterministic = _comparison_response(route, selected)
+                elif selected and "inactive" in selected[0].flags:
+                    prefix = "\n\n".join(filter(None, [
+                        prefix,
+                        f"This bond is marked inactive in the source table (status: {display_value(selected[0], 'status')}; "
+                        f"fetched {selected[0].metadata.get('observed_at')}). This does not establish current purchase availability. [1]",
+                    ]))
+        except Exception:
+            raise HTTPException(status_code=503, detail="The bond database is unavailable")
         if deterministic:
             deterministic.answer = "\n\n".join(filter(None, [limitation, deterministic.answer]))
             if not route.explanation or not matches:
@@ -480,6 +511,9 @@ def create_app(
 
         if route.intent == "education" or route.explanation:
             try:
+                if not await asyncio.to_thread(index_ready, current):
+                    raise IndexError("Text index unavailable")
+                store = await asyncio.to_thread(store_loader, current)
                 general = await asyncio.to_thread(
                     _retrieve, store, route.explanation or request.question, 12,
                     max_results=2 if matches else 4, route=route.intent, lane="blog",
@@ -488,6 +522,11 @@ def create_app(
                     min_relevance_score=current.min_relevance_score, deduplicate=True,
                 )
                 matches += general
+            except (CorpusError, IndexError):
+                if deterministic:
+                    deterministic.answer += "\n\nThe educational sources are unavailable, so I cannot add the requested explanation."
+                    return deterministic
+                raise HTTPException(status_code=503, detail="RAG index is unavailable or stale; run python -m app.index")
             except Exception:
                 if deterministic:
                     deterministic.answer += "\n\nThe educational sources are unavailable, so I cannot add the requested explanation."
@@ -521,7 +560,7 @@ def create_app(
             response = await asyncio.to_thread(chat_factory(prepared.settings).invoke, prepared.messages)
         except Exception:
             if prepared.deterministic:
-                prepared.deterministic.answer += "\n\nThe explanation model is unavailable; these are the recorded snapshot results."
+                prepared.deterministic.answer += "\n\nThe explanation model is unavailable; these are the fetched database results."
                 return prepared.deterministic
             raise HTTPException(status_code=503, detail="The chat model is unavailable")
         return ChatResponse(answer=prepared.prefix + str(response.content), citations=prepared.citations)
@@ -543,7 +582,7 @@ def create_app(
                 if not prepared.deterministic:
                     raise HTTPException(status_code=503, detail="The chat model is unavailable")
                 citations = prepared.deterministic.citations
-                answer = prepared.deterministic.answer + "\n\nThe explanation model is unavailable; these are the recorded snapshot results."
+                answer = prepared.deterministic.answer + "\n\nThe explanation model is unavailable; these are the fetched database results."
                 model = None
 
         def event(name: str, data: Any) -> str:

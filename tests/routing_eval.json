@@ -202,19 +202,14 @@
       "id": "comparison-01",
       "question": "Compare the rating of IN0000000001 and IN0000000002.",
       "expected": {
-        "intent": "comparison",
-        "isins": [
-          "IN0000000001",
-          "IN0000000002"
-        ],
+        "intent": "clarification",
+        "isins": [],
         "filters": [],
         "sorting": null,
         "result_limit": 4,
         "include_matured": false,
         "explanation": false,
-        "requested_fields": [
-          "rating"
-        ],
+        "requested_fields": [],
         "limitations": []
       }
     },
@@ -261,20 +256,9 @@
       "id": "search-02",
       "question": "I need bonds with coupon below 7% and monthly payments.",
       "expected": {
-        "intent": "discovery",
+        "intent": "clarification",
         "isins": [],
-        "filters": [
-          [
-            "coupon",
-            "lt",
-            "7"
-          ],
-          [
-            "payment_frequency",
-            "eq",
-            "monthly"
-          ]
-        ],
+        "filters": [],
         "sorting": null,
         "result_limit": 4,
         "include_matured": false,
@@ -316,20 +300,9 @@
       "id": "search-04",
       "question": "Find corporate bonds rated AAA.",
       "expected": {
-        "intent": "discovery",
+        "intent": "clarification",
         "isins": [],
-        "filters": [
-          [
-            "category",
-            "eq",
-            "corporate-bonds"
-          ],
-          [
-            "rating",
-            "eq",
-            "aaa"
-          ]
-        ],
+        "filters": [],
         "sorting": null,
         "result_limit": 4,
         "include_matured": false,
@@ -389,25 +362,9 @@
       "id": "search-07",
       "question": "Find quarterly secured bonds above 9% YTM.",
       "expected": {
-        "intent": "discovery",
+        "intent": "clarification",
         "isins": [],
-        "filters": [
-          [
-            "payment_frequency",
-            "eq",
-            "quarterly"
-          ],
-          [
-            "security",
-            "eq",
-            "secured"
-          ],
-          [
-            "ytm",
-            "gt",
-            "9"
-          ]
-        ],
+        "filters": [],
         "sorting": null,
         "result_limit": 4,
         "include_matured": false,
@@ -725,6 +682,165 @@
         "intent": "capability",
         "isins": [],
         "filters": [],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "top-01",
+      "question": "give me top bonds",
+      "expected": {
+        "intent": "discovery",
+        "isins": [],
+        "filters": [],
+        "sorting": [
+          "ytm",
+          true
+        ],
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "top-02",
+      "question": "give me name,isin,rating of top 3 bonds",
+      "expected": {
+        "intent": "clarification",
+        "isins": [],
+        "filters": [],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "top-03",
+      "question": "Can you provide the top three bonds with their credit ratings and ISINs?",
+      "expected": {
+        "intent": "clarification",
+        "isins": [],
+        "filters": [],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "top-04",
+      "question": "Please show the top two secured bonds and include their ratings",
+      "expected": {
+        "intent": "clarification",
+        "isins": [],
+        "filters": [],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "top-05",
+      "question": "show top 3 bonds by highest coupon",
+      "expected": {
+        "intent": "discovery",
+        "isins": [],
+        "filters": [],
+        "sorting": [
+          "coupon",
+          true
+        ],
+        "result_limit": 3,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "top-06",
+      "question": "show top 3 bonds by rating",
+      "expected": {
+        "intent": "clarification",
+        "isins": [],
+        "filters": [],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "sql-face-value",
+      "question": "Show bonds with face value above 5 lakh",
+      "expected": {
+        "intent": "discovery",
+        "isins": [],
+        "filters": [
+          [
+            "face_value",
+            "gt",
+            "500000"
+          ]
+        ],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "sql-issue-date",
+      "question": "Show bonds issued before 2024-01-01",
+      "expected": {
+        "intent": "discovery",
+        "isins": [],
+        "filters": [
+          [
+            "issue_date",
+            "lt",
+            "2024-01-01"
+          ]
+        ],
+        "sorting": null,
+        "result_limit": 4,
+        "include_matured": false,
+        "explanation": false,
+        "requested_fields": [],
+        "limitations": []
+      }
+    },
+    {
+      "id": "sql-status",
+      "question": "Show matured bonds",
+      "expected": {
+        "intent": "discovery",
+        "isins": [],
+        "filters": [
+          [
+            "status",
+            "eq",
+            "matured"
+          ]
+        ],
         "sorting": null,
         "result_limit": 4,
         "include_matured": false,

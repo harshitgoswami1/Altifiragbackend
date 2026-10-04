@@ -28,7 +28,22 @@ class IndexError(RuntimeError):
 
 
 def index_fingerprint(corpus: Corpus, settings: Settings) -> str:
-    return hashlib.sha256(f"{corpus.checksum}\0{settings.embedding_model}".encode()).hexdigest()[:24]
+    return hashlib.sha256(f"text-v1\0{_text_checksum(corpus)}\0{settings.embedding_model}".encode()).hexdigest()[:24]
+
+
+def _text_records(corpus: Corpus) -> list[dict[str, Any]]:
+    records = [row for row in corpus.records if row.get("document_type") in {"blog", "page"}]
+    if not records:
+        raise CorpusError("The audited corpus has no blog or page text to index")
+    return records
+
+
+def _text_checksum(corpus: Corpus) -> str:
+    digest = hashlib.sha256()
+    for row in _text_records(corpus):
+        digest.update(json.dumps(row, sort_keys=True, ensure_ascii=False).encode())
+        digest.update(b"\n")
+    return digest.hexdigest()
 
 
 def _manifest_path(settings: Settings) -> Path:
@@ -69,9 +84,9 @@ def active_manifest(settings: Settings) -> dict[str, Any]:
 def ensure_current_index(settings: Settings, corpus: Corpus | None = None) -> dict[str, Any]:
     corpus = corpus or load_corpus(settings)
     manifest = active_manifest(settings)
-    if manifest.get("corpus_checksum") != corpus.checksum or manifest.get("embedding_model") != settings.embedding_model:
+    if manifest.get("text_checksum") != _text_checksum(corpus) or manifest.get("embedding_model") != settings.embedding_model:
         raise IndexError("The active index is stale; run python -m app.index")
-    if manifest.get("chunk_count") != len(corpus.records):
+    if manifest.get("chunk_count") != len(_text_records(corpus)):
         raise IndexError("The active index count does not match the copied corpus")
     return manifest
 
@@ -97,9 +112,9 @@ def _stored_count(store: Chroma) -> int:
 def _activate(settings: Settings, corpus: Corpus, fingerprint: str) -> dict[str, Any]:
     manifest = {
         "fingerprint": fingerprint,
-        "corpus_checksum": corpus.checksum,
+        "text_checksum": _text_checksum(corpus),
         "embedding_model": settings.embedding_model,
-        "chunk_count": len(corpus.records),
+        "chunk_count": len(_text_records(corpus)),
         "built_at": datetime.now(timezone.utc).isoformat(),
     }
     _write_json_atomically(_manifest_path(settings), manifest)
@@ -109,6 +124,7 @@ def _activate(settings: Settings, corpus: Corpus, fingerprint: str) -> dict[str,
 def build_index(settings: Settings, embeddings: Any | None = None) -> dict[str, Any]:
     """Build at a new content-addressed location before switching the manifest."""
     corpus = load_corpus(settings)
+    rows = _text_records(corpus)
     fingerprint = index_fingerprint(corpus, settings)
     settings.vectorstore_dir.mkdir(parents=True, exist_ok=True)
     embeddings = embeddings or OllamaEmbeddings(model=settings.embedding_model, base_url=settings.ollama_base_url)
@@ -120,7 +136,7 @@ def build_index(settings: Settings, embeddings: Any | None = None) -> dict[str, 
             active = None
         if active and active["fingerprint"] == fingerprint:
             existing = _store(settings, fingerprint, embeddings)
-            if _stored_count(existing) != len(corpus.records):
+            if _stored_count(existing) != len(rows):
                 raise IndexError("The active index has an unexpected record count")
             return _activate(settings, corpus, fingerprint)
         # A failed build never becomes active. Remove its old, inactive directory
@@ -130,13 +146,13 @@ def build_index(settings: Settings, embeddings: Any | None = None) -> dict[str, 
     # Keep an incomplete version inactive. The next fresh process removes it
     # before retrying, avoiding Windows' open-SQLite-directory rename limit.
     store = _store(settings, fingerprint, embeddings)
-    for start in range(0, len(corpus.records), BATCH_SIZE):
-        batch = corpus.records[start:start + BATCH_SIZE]
+    for start in range(0, len(rows), BATCH_SIZE):
+        batch = rows[start:start + BATCH_SIZE]
         store.add_documents(
             [Document(page_content=row["embedding_text"], metadata=chroma_metadata(row)) for row in batch],
             ids=[row["id"] for row in batch],
         )
-    if _stored_count(store) != len(corpus.records):
+    if _stored_count(store) != len(rows):
         raise IndexError("New index record count does not match the copied corpus")
     return _activate(settings, corpus, fingerprint)
 

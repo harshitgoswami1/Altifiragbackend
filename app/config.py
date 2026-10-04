@@ -22,6 +22,7 @@ class Settings:
     router_model: str | None = None
     router_timeout_seconds: float = 15.0
     router_enabled: bool = False
+    database_url: str | None = None
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -56,4 +57,5 @@ class Settings:
             router_model=os.environ.get("RAG_ROUTER_MODEL") or None,
             router_timeout_seconds=router_timeout,
             router_enabled=router_enabled == "true",
+            database_url=os.environ.get("DATABASE_URL") or None,
         )

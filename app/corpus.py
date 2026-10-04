@@ -1,4 +1,4 @@
-"""Validation and conversion for the backend-owned corpus snapshot."""
+"""Validation and conversion for the backend-owned audited corpus."""
 
 from dataclasses import dataclass
 import hashlib

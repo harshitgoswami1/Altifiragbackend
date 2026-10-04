@@ -1,4 +1,4 @@
-"""Typed snapshot observations and deterministic bond screening."""
+"""Typed bond observations and deterministic condition handling."""
 
 from dataclasses import dataclass
 from datetime import date
@@ -13,15 +13,18 @@ from pydantic import BaseModel, ConfigDict, model_validator
 
 BondField = Literal[
     "ytm", "coupon", "minimum_investment", "maturity", "rating", "security",
-    "category", "payment_frequency", "title",
+    "category", "payment_frequency", "title", "face_value", "issue_date", "status",
 ]
-SortField = Literal["ytm", "coupon", "minimum_investment", "maturity"]
-NUMERIC_FIELDS = {"ytm", "coupon", "minimum_investment"}
+SortField = Literal["ytm", "coupon", "minimum_investment", "maturity", "face_value", "issue_date"]
+NUMERIC_FIELDS = {"ytm", "coupon", "minimum_investment", "face_value"}
+DATE_FIELDS = {"maturity", "issue_date"}
+SQL_FIELDS = {"ytm", "coupon", "minimum_investment", "maturity", "title", "face_value", "issue_date", "status"}
 LABELS = {
     "ytm": "Observed yield to maturity", "coupon": "Coupon rate",
     "minimum_investment": "Observed minimum investment", "maturity": "Maturity date",
     "rating": "Credit rating", "security": "Security", "category": "Instrument category",
     "payment_frequency": "Interest payment frequency", "title": "Bond",
+    "face_value": "Face value", "issue_date": "Issue date", "status": "Bond status",
 }
 FREQUENCIES = {
     "monthly": "monthly", "quarterly": "quarterly", "yearly": "annually",
@@ -57,7 +60,7 @@ def typed_value(field: str, value: str) -> Decimal | date | str:
         if not number.is_finite() or number < 0:
             raise ValueError("Expected a finite nonnegative value")
         return number
-    if field == "maturity":
+    if field in DATE_FIELDS:
         return date.fromisoformat(value)
     value = " ".join(value.casefold().split())
     if field == "rating":
@@ -75,6 +78,8 @@ def typed_value(field: str, value: str) -> Decimal | date | str:
         value = normalize_words(value)
         if not value:
             raise ValueError("Empty title constraint")
+    elif field == "status" and not value:
+        raise ValueError("Empty status")
     return value
 
 
@@ -88,7 +93,7 @@ class BondFilter(BaseModel):
     @model_validator(mode="after")
     def valid_condition(self) -> "BondFilter":
         typed_value(self.field, self.value)
-        if self.field not in NUMERIC_FIELDS | {"maturity"} and self.op != "eq":
+        if self.field not in NUMERIC_FIELDS | DATE_FIELDS and self.op != "eq":
             raise ValueError("Only exact categorical conditions are supported")
         if not self.source.strip():
             raise ValueError("A condition needs a source phrase")
@@ -120,7 +125,7 @@ def parse_bond(metadata: dict[str, Any], text: str) -> BondObservation:
         if field in {"ytm", "coupon"}:
             match = re.fullmatch(r"(\d+(?:\.\d+)?)% p\.a\.", raw)
             raw = match[1] if match else ""
-        elif field == "minimum_investment":
+        elif field in {"minimum_investment", "face_value"}:
             match = re.fullmatch(r"(\d+(?:\.\d+)?) INR", raw)
             raw = match[1] if match else ""
         try:
@@ -152,7 +157,7 @@ def matches_condition(record: BondObservation, condition: BondFilter) -> bool:
 def contradictory(filters: list[BondFilter]) -> bool:
     for field in LABELS:
         conditions = [condition for condition in filters if condition.field == field]
-        if field in NUMERIC_FIELDS | {"maturity"}:
+        if field in NUMERIC_FIELDS | DATE_FIELDS:
             # Any feasible interval has an endpoint satisfying all conditions, or
             # lies strictly between its strongest lower and upper bounds.
             lower = [(typed_value(field, c.value), c.op == "gt") for c in conditions if c.op in {"gt", "gte", "eq"}]
@@ -208,8 +213,10 @@ def display_value(record: BondObservation, field: str) -> str:
     value = record.values.get(field)
     if value is None:
         return "not recorded or malformed"
+    if field == "status":
+        return str(record.metadata.get("bond_status") or value)
     if field in {"ytm", "coupon"}:
         return f"{value}% p.a."
-    if field == "minimum_investment":
+    if field in {"minimum_investment", "face_value"}:
         return f"{value} INR"
     return str(value)

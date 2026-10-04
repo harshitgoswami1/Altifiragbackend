@@ -12,13 +12,14 @@ from fastapi.testclient import TestClient
 from langchain_core.documents import Document
 from langchain_core.messages import AIMessage
 
-from app.api import SYSTEM_PROMPT, _route_request, create_app
+from app.api import SYSTEM_PROMPT, _route_request, create_app as production_create_app
 from app.config import Settings
 from app.evaluate_routing import decision_signature, evaluate, unsafe_decision
 from app.corpus import CorpusError, chroma_metadata, load_corpus
-from app.index import IndexError, active_manifest, build_index, ensure_current_index
+from app.index import IndexError, active_manifest, build_index, ensure_current_index, open_active_store
 from app.retrieval import QueryRoute, RouterProposal, bond_catalog, deduplicate_matches, route_question, validate_proposal
-from app.bonds import BondFilter, parse_bond
+from app.bonds import BondFilter, BondObservation, parse_bond, screen_bonds
+from app.sql_bonds import SearchResult
 
 
 def record(
@@ -137,6 +138,45 @@ class FakeStore:
         ]
 
 
+class FakeBondRepository:
+    def __init__(self, rows=None):
+        self.records = [parse_bond(chroma_metadata(row), row["embedding_text"])
+                        for row in (rows or []) if row["document_type"] == "bond"]
+        converted = []
+        for record in self.records:
+            inactive = "maturity_matured" in record.flags
+            record.metadata["is_active"] = not inactive
+            record.metadata["bond_status"] = "Matured" if inactive else "Active"
+            record.values["status"] = "matured" if inactive else "active"
+            record.values["face_value"] = None
+            record.values["issue_date"] = None
+            converted.append(BondObservation(record.metadata, record.text, record.values,
+                                             (*record.flags, "inactive") if inactive else record.flags))
+        self.records = converted
+
+    def reachable(self):
+        return True
+
+    def catalog(self):
+        return [record.metadata for record in self.records]
+
+    def by_isins(self, isins):
+        return [record for isin in isins for record in self.records if record.metadata["isin"] == isin]
+
+    def search(self, route):
+        records = self.records if route.include_matured or any(item.field == "status" for item in route.filters) else [
+            record for record in self.records if record.metadata["is_active"]]
+        eligible, _ = screen_bonds(records, route.filters, route.sorting, True, route.isins or None)
+        return SearchResult(eligible[:min(route.result_limit, 20)], len(eligible))
+
+
+def create_app(settings=None, *, store_loader=None, bond_loader=None, **kwargs):
+    if bond_loader is None:
+        bond_loader = lambda current: FakeBondRepository(store_loader(current).rows if store_loader else [])
+    return production_create_app(settings, store_loader=store_loader, bond_loader=bond_loader,
+                                 bond_probe=lambda _: True, **kwargs)
+
+
 class FakeChat:
     def __init__(self):
         self.messages = None
@@ -226,6 +266,16 @@ class BackendTests(unittest.TestCase):
         with self.assertRaises(IndexError):
             ensure_current_index(self.settings)
 
+    def test_index_contains_only_text_and_ignores_bond_only_changes(self):
+        blog = record()
+        write_corpus(self.settings.source_dir, [blog, bond_record()])
+        manifest = build_index(self.settings, TinyEmbeddings())
+        self.assertEqual(manifest["chunk_count"], 1)
+        stored = open_active_store(self.settings, TinyEmbeddings()).get(include=["metadatas"])
+        self.assertEqual([item["document_type"] for item in stored["metadatas"]], ["blog"])
+        write_corpus(self.settings.source_dir, [blog, bond_record(ytm="12")])
+        self.assertEqual(ensure_current_index(self.settings)["fingerprint"], manifest["fingerprint"])
+
     def test_api_validates_input_and_returns_source_citations(self):
         fake_chat = FakeChat()
         app = create_app(
@@ -245,7 +295,7 @@ class BackendTests(unittest.TestCase):
 
     def test_api_returns_503_when_index_is_unavailable(self):
         app = create_app(self.settings, index_ready=lambda _: False, ollama_probe=lambda _: True)
-        response = TestClient(app).post("/v1/chat", json={"question": "Hello"})
+        response = TestClient(app).post("/v1/chat", json={"question": "What is a bond?"})
         self.assertEqual(response.status_code, 503)
 
     def test_stream_returns_citations_and_incremental_answer(self):
@@ -271,7 +321,7 @@ class BackendTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertIn('event: citations\ndata: []', response.text)
-        self.assertIn("does not contain a bond record", response.text)
+        self.assertIn("does not contain a record", response.text)
         self.assertIn("event: done", response.text)
         self.assertEqual(fake_chat.invocations, 0)
 
@@ -280,7 +330,7 @@ class BackendTests(unittest.TestCase):
         client = TestClient(app)
 
         self.assertEqual(client.post("/v1/chat/stream", json={"question": " "}).status_code, 422)
-        self.assertEqual(client.post("/v1/chat/stream", json={"question": "Hello"}).status_code, 503)
+        self.assertEqual(client.post("/v1/chat/stream", json={"question": "What is a bond?"}).status_code, 503)
 
     def test_stream_reports_model_failure_as_event(self):
         class FailingChat:
@@ -392,7 +442,7 @@ class BackendTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["citations"], [])
-        self.assertIn("does not contain a bond record", response.json()["answer"])
+        self.assertIn("does not contain a record", response.json()["answer"])
         self.assertEqual(store.calls, [])
         self.assertEqual(fake_chat.invocations, 0)
 
@@ -594,7 +644,8 @@ class BackendTests(unittest.TestCase):
         ]
         client, store, model = self.routed_client(rows)
         body = client.post("/v1/chat", json={"question": "Show secured AAA bonds above 10% YTM with monthly payments maturing before 2030"}).json()
-        self.assertEqual([c["isin"] for c in body["citations"]], ["IN0000000001"])
+        self.assertEqual(body["citations"], [])
+        self.assertIn("Please", body["answer"])
         self.assertEqual(store.calls, [])
         self.assertEqual(model.invocations, 0)
 
@@ -617,7 +668,7 @@ class BackendTests(unittest.TestCase):
         body = client.post("/v1/chat", json={"question": "Compare IN0000000001 and IN0000000002 and IN0000000001"}).json()
         self.assertEqual([c["isin"] for c in body["citations"]], ["IN0000000001", "IN0000000002"])
         self.assertIn("not recorded or malformed", body["answer"])
-        self.assertIn("flagged matured", body["answer"])
+        self.assertIn("inactive in source table", body["answer"])
         self.assertEqual(store.calls, [])
         self.assertEqual(model.invocations, 0)
 
@@ -685,18 +736,15 @@ class BackendTests(unittest.TestCase):
     def test_security_rating_frequency_and_category_matching(self):
         row = detailed_bond(**{"Credit rating": "AA+ (CE)", "Interest payment frequency": "Half_yearly"})
         client, _, _ = self.routed_client([row])
-        for question, count in (
-            ("Show secured bonds", 1), ("Show senior secured bonds", 1),
-            ("Show unsecured bonds", 0), ("Show AA+ (CE) bonds", 1), ("Show AA+ bonds", 0),
-            ("Show half yearly bonds", 1), ("Show semiannual bonds", 1),
-            ("Show government bonds", 1), ("Show corporate bonds", 0),
+        for question in (
+            "Show secured bonds", "Show senior secured bonds", "Show unsecured bonds",
+            "Show AA+ (CE) bonds", "Show AA+ bonds", "Show half yearly bonds",
+            "Show semiannual bonds", "Show government bonds", "Show corporate bonds",
         ):
             with self.subTest(question=question):
                 body = client.post("/v1/chat", json={"question": question}).json()
-                self.assertEqual(len(body["citations"]), count, body["answer"])
-        subordinate = detailed_bond(**{"Security": "Subordinated"})
-        client, _, _ = self.routed_client([subordinate])
-        self.assertEqual(client.post("/v1/chat", json={"question": "Show secured bonds"}).json()["citations"], [])
+                self.assertEqual(body["citations"], [])
+                self.assertIn("Please", body["answer"])
 
     def test_structured_and_maturity_payment_frequencies(self):
         for stored, question in (
@@ -706,7 +754,9 @@ class BackendTests(unittest.TestCase):
         ):
             with self.subTest(stored=stored):
                 client, _, _ = self.routed_client([detailed_bond(**{"Interest payment frequency": stored})])
-                self.assertEqual(len(client.post("/v1/chat", json={"question": question}).json()["citations"]), 1)
+                body = client.post("/v1/chat", json={"question": question}).json()
+                self.assertEqual(body["citations"], [])
+                self.assertIn("Please", body["answer"])
 
     def test_missing_or_malformed_values_never_satisfy_filter(self):
         client, _, _ = self.routed_client([
@@ -715,9 +765,8 @@ class BackendTests(unittest.TestCase):
             bond_record("IN0000000003", "Missing Finance", "11"),
             detailed_bond("IN0000000004", "Nonmatching Finance", ytm="unknown", **{"Interest payment frequency": "Quarterly"}),
         ])
-        body = client.post("/v1/chat", json={"question": "Show monthly bonds with YTM above 10%"}).json()
-        self.assertEqual(len(body["citations"]), 1)
-        self.assertIn("Excluded 2", body["answer"])
+        body = client.post("/v1/chat", json={"question": "Show bonds with YTM above 10%"}).json()
+        self.assertEqual(len(body["citations"]), 2)
         row = detailed_bond()
         row["embedding_text"] += "\nObserved yield to maturity: 20% p.a."
         self.assertIsNone(parse_bond(chroma_metadata(row), row["embedding_text"]).values["ytm"])
@@ -728,9 +777,107 @@ class BackendTests(unittest.TestCase):
         client, _, model = self.routed_client(rows)
         body = client.post("/v1/chat", json={"question": "Two highest-YTM bonds between 10% and 12%"}).json()
         self.assertEqual([c["isin"] for c in body["citations"]], ["IN0000000001", "IN0000000002"])
-        self.assertIn("3 eligible snapshot records", body["answer"])
+        self.assertIn("3 matching database records", body["answer"])
         self.assertIn("not a market-wide ranking", body["answer"])
         self.assertEqual(model.invocations, 0)
+
+    def test_top_bonds_default_to_observed_ytm_and_show_requested_rating(self):
+        rows = [
+            detailed_bond("IN0000000002", "Rated Two", "12", **{"Credit rating": "AA"}),
+            bond_record("IN0000000001", "Unrated One", "12"),
+            detailed_bond("IN0000000003", "Rated Three", "11"),
+            detailed_bond("IN0000000004", "Lower Four", "10"),
+            detailed_bond("IN0000000005", "Matured Five", "14"),
+            detailed_bond("IN0000000006", "Malformed Six", "unknown"),
+        ]
+        rows[4]["quality_flags"] = ["maturity_matured"]
+        client, _, model = self.routed_client(rows)
+        default = client.post("/v1/chat", json={"question": "give me top bonds"}).json()
+        selected = client.post("/v1/chat", json={"question": "give me name,isin,coupon of top 3 bonds"}).json()
+        self.assertEqual([item["isin"] for item in default["citations"]],
+                         ["IN0000000001", "IN0000000002", "IN0000000003", "IN0000000004"])
+        self.assertEqual([item["isin"] for item in selected["citations"]],
+                         ["IN0000000001", "IN0000000002", "IN0000000003"])
+        self.assertIn("Coupon rate", selected["answer"])
+        self.assertIn("observed YTM 12% p.a.", selected["answer"])
+        self.assertIn("Ordered by Observed yield to maturity (descending)", selected["answer"])
+        self.assertIn("matching database records", selected["answer"])
+        self.assertEqual(model.invocations, 0)
+
+    def test_model_routes_flexible_top_lists_and_display_fields(self):
+        rows = [detailed_bond("IN0000000001", "First", "12"),
+                detailed_bond("IN0000000002", "Second", "11"),
+                detailed_bond("IN0000000003", "Third", "10")]
+        router = FakeRouter({
+            "intent": "discovery", "result_limit": 3, "count_source": "top three",
+            "requested_fields": ["coupon"],
+            "field_selections": [
+                {"field": "coupon", "source": "coupons"},
+                {"field": "isin", "source": "ISINs"},
+            ],
+        })
+        app = create_app(replace(self.settings, router_enabled=True),
+                         store_loader=lambda _: FakeStore(rows), router_factory=lambda _: router,
+                         index_ready=lambda _: True)
+        question = "Can you provide the top three bonds with their coupons and ISINs?"
+        body = TestClient(app).post("/v1/chat", json={"question": question}).json()
+        self.assertEqual([item["isin"] for item in body["citations"]],
+                         ["IN0000000001", "IN0000000002", "IN0000000003"])
+        self.assertIn("coupon rate", body["answer"].casefold())
+        self.assertIn("Ordered by Observed yield to maturity", body["answer"])
+        self.assertEqual(router.calls, 1)
+        incomplete = FakeRouter({"intent": "discovery", "result_limit": 3, "count_source": "top three"})
+        app = create_app(replace(self.settings, router_enabled=True),
+                         store_loader=lambda _: FakeStore(rows), router_factory=lambda _: incomplete,
+                         index_ready=lambda _: True)
+        rejected = TestClient(app).post("/v1/chat", json={"question": question}).json()
+        self.assertEqual(rejected["citations"], [])
+        self.assertIn("Please specify", rejected["answer"])
+
+    def test_model_top_filters_and_explicit_sort_override(self):
+        rows = [detailed_bond("IN0000000001", "Secured First", "12"),
+                detailed_bond("IN0000000002", "Secured Second", "11"),
+                detailed_bond("IN0000000003", "Unsecured Third", "13", **{"Security": "Unsecured"})]
+        catalog = bond_catalog(chroma_metadata(row) for row in rows)
+        filtered = RouterProposal.model_validate({
+            "intent": "discovery", "result_limit": 2, "count_source": "top two",
+            "filters": [{"field": "ytm", "op": "lt", "value": "13", "source": "YTM below 13%"}],
+            "field_selections": [{"field": "coupon", "source": "coupons"}],
+            "requested_fields": ["coupon"],
+        })
+        route = validate_proposal("Please show the top two bonds with YTM below 13% and include their coupons", filtered, catalog)
+        self.assertEqual(route.intent, "discovery")
+        self.assertEqual(route.sorting.field, "ytm")
+        self.assertEqual(route.requested_fields, ["coupon"])
+        router = FakeRouter(filtered.model_dump())
+        app = create_app(replace(self.settings, router_enabled=True),
+                         store_loader=lambda _: FakeStore(rows), router_factory=lambda _: router,
+                         index_ready=lambda _: True)
+        body = TestClient(app).post("/v1/chat", json={
+            "question": "Please show the top two bonds with YTM below 13% and include their coupons",
+        }).json()
+        self.assertEqual([item["isin"] for item in body["citations"]],
+                         ["IN0000000001", "IN0000000002"])
+        explicit = RouterProposal.model_validate({
+            "intent": "discovery", "result_limit": 3, "count_source": "top 3",
+            "sorting": {"field": "coupon", "descending": True, "source": "highest coupon"},
+        })
+        route = validate_proposal("show top 3 bonds by highest coupon", explicit, catalog)
+        self.assertEqual(route.sorting.field, "coupon")
+        self.assertTrue(route.sorting.descending)
+        with self.assertRaises(ValueError):
+            validate_proposal("Please show the top two bonds with YTM below 13% and include their coupons",
+                              filtered.model_copy(update={"filters": []}), catalog)
+        with self.assertRaises(ValueError):
+            validate_proposal("show top 3 bonds", explicit, catalog)
+        self.assertEqual(route_question("show top 3 bonds by rating", catalog).intent, "clarification")
+        with self.assertRaises(ValueError):
+            validate_proposal("show top 3 bonds by rating", RouterProposal.model_validate({
+                "intent": "discovery", "result_limit": 3, "count_source": "top 3",
+                "sorting": {"field": "ytm", "descending": True, "source": "top"},
+                "requested_fields": ["rating"],
+                "field_selections": [{"field": "rating", "source": "rating"}],
+            }), catalog)
 
     def test_maturity_flag_default_and_explicit_inclusion(self):
         row = detailed_bond()
@@ -741,7 +888,39 @@ class BackendTests(unittest.TestCase):
         included = client.post("/v1/chat", json={"question": "Show bonds above 10% including matured records"}).json()
         self.assertEqual([c["isin"] for c in excluded["citations"]], ["IN0000000002"])
         self.assertEqual(len(included["citations"]), 2)
-        self.assertIn("flagged matured", included["answer"])
+        self.assertIn("inactive in source table", included["answer"])
+
+    def test_status_filter_includes_inactive_but_default_search_does_not(self):
+        inactive = detailed_bond("IN0000000001", "Old Finance")
+        inactive["quality_flags"] = ["maturity_matured"]
+        client, _, _ = self.routed_client([inactive, detailed_bond("IN0000000002", "Active Finance")])
+        default = client.post("/v1/chat", json={"question": "Show bonds above 10%"}).json()
+        status = client.post("/v1/chat", json={"question": "Show matured bonds"}).json()
+        lookup = client.post("/v1/chat", json={"question": "Compare IN0000000001 and IN0000000002"}).json()
+        exact = client.post("/v1/chat", json={"question": "What is the YTM of IN0000000001?"}).json()
+        self.assertEqual([item["isin"] for item in default["citations"]], ["IN0000000002"])
+        self.assertEqual([item["isin"] for item in status["citations"]], ["IN0000000001"])
+        self.assertIn("inactive in source table", status["answer"])
+        self.assertEqual(len(lookup["citations"]), 2)
+        self.assertIn("inactive in the source table", exact["answer"])
+
+    def test_database_failure_returns_503_and_health_reports_it(self):
+        class BrokenBonds:
+            def catalog(self):
+                raise RuntimeError("database unavailable")
+
+            def reachable(self):
+                return False
+
+        app = production_create_app(
+            self.settings, bond_loader=lambda _: BrokenBonds(),
+            index_ready=lambda _: True, ollama_probe=lambda _: True,
+        )
+        client = TestClient(app)
+        self.assertEqual(client.post("/v1/chat", json={"question": "Show bonds"}).status_code, 503)
+        health = client.get("/healthz")
+        self.assertEqual(health.status_code, 503)
+        self.assertFalse(health.json()["database_reachable"])
 
     def test_unsupported_or_conflicting_conditions_do_not_execute(self):
         client, store, model = self.routed_client([detailed_bond()])
@@ -780,7 +959,7 @@ class BackendTests(unittest.TestCase):
         client, _, _ = self.routed_client([detailed_bond()])
         body = client.post("/v1/chat", json={"question": "Show available bonds today above 10%"}).json()
         self.assertEqual(len(body["citations"]), 1)
-        self.assertIn("cannot verify live data", body["answer"])
+        self.assertIn("cannot verify live prices", body["answer"])
 
     def test_mixed_search_preserves_deterministic_results_and_stream_parity(self):
         client, store, model = self.routed_client([detailed_bond(), record()])
@@ -933,7 +1112,6 @@ class BackendTests(unittest.TestCase):
             "Show bonds coupon above 8% YTM",
             "Show bonds with coupon and YTM above 10%",
             "Explain IN0000000001 and compare it with Unknown Finance",
-            "Show top 5 bonds",
             "What is the yield of IN000000001?",
         ):
             with self.subTest(question=question):
@@ -1039,6 +1217,8 @@ class BackendTests(unittest.TestCase):
             self.assertTrue(settings.router_enabled)
             self.assertEqual(settings.router_model, "router-test")
             self.assertEqual(settings.router_timeout_seconds, 2)
+        with patch.dict("os.environ", {"OLLAMA_BASE_URL": "http://localhost:11434"}, clear=True):
+            self.assertFalse(Settings.from_env().router_enabled)
         for timeout in ("0", "-1", "nan", "inf", "invalid"):
             with self.subTest(timeout=timeout), patch.dict("os.environ", {"OLLAMA_BASE_URL": "http://localhost:11434", "RAG_ROUTER_TIMEOUT_SECONDS": timeout}, clear=True):
                 with self.assertRaises(RuntimeError):
@@ -1058,7 +1238,7 @@ class BackendTests(unittest.TestCase):
 
     def test_prompt_excludes_advice_and_live_data(self):
         self.assertIn("personalized investment advice", SYSTEM_PROMPT)
-        self.assertIn("live data", SYSTEM_PROMPT)
+        self.assertIn("live market data", SYSTEM_PROMPT)
 
 
 if __name__ == "__main__":
